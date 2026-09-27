@@ -1,0 +1,58 @@
+[build-system]
+requires = ["hatchling>=1.24"]
+build-backend = "hatchling.build"
+
+[project]
+name = "jetfighter"
+version = "0.1.0"
+description = "Simulation simplifiée d'un avion de chasse (type F-16) et apprentissage par renforcement de manœuvres."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Elouan Salaun" }]
+dependencies = [
+    "numpy>=1.26",
+    "scipy>=1.11",
+    "matplotlib>=3.8",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+rl = [
+    "gymnasium>=0.29",
+    "stable-baselines3>=2.3",
+    "torch>=2.2",
+    "tensorboard>=2.16",
+]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "ruff>=0.6",
+    "mypy>=1.10",
+    "pre-commit>=3.7",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/jetfighter"]
+
+# --------------------------------------------------------------------------
+# Outils
+# --------------------------------------------------------------------------
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "NPY", "RUF"]
+ignore = [
+    "N802", "N803", "N806",  # notations physiques : T, P, C_bn, Ixx...
+    "RUF001", "RUF002", "RUF003",  # caractères grecs / accents dans les docstrings
+]
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
