@@ -131,9 +131,17 @@ V̇  = (T·cos α − D) / m − g·sin γ
 L  = q̄·S·CL(α, M)      D = q̄·S·(CD0(M) + k·CL²)
 ```
 
-- [ ] Implémentation + limites : α_max (décrochage), n ∈ [−3 g, +9 g], taux de variation de μ limité
-- [ ] Traînée : polaire parabolique CD = CD0(M) + k·CL², avec hausse de CD0 en transsonique
-- [ ] Tests : vol en palier stabilisé, virage à facteur de charge constant (taux de virage ω = g·√(n²−1)/V), montée, plafond
+- [x] Implémentation + limites : α_max (décrochage), n ∈ [−3 g, +9 g], taux de variation de μ limité
+- [x] Traînée : polaire parabolique CD = CD0(M) + k·CL², avec hausse de CD0 en transsonique
+- [x] Tests : vol en palier stabilisé, virage à facteur de charge constant (taux de virage ω = g·√(n²−1)/V), montée, plafond
+
+**Réalisé** (`src/jetfighter/aircraft/`, validation : `scripts/phase2_performance.py`)
+- Formulation **sans singularité** : les équations ci-dessus deviennent singulières à γ = ±90°. Le modèle intègre donc un quaternion du repère vent (angles d'Euler = χ, γ, μ), ce qui permet les loopings.
+- Commandes retenues : `[manette, α commandée, taux de roulis autour de la vitesse]`, avec réponse du 1er ordre (α : 0,25 s ; roulis : 0,2 s ; moteur : 1 s), **limiteur d'incidence et de facteur de charge** façon commandes de vol électriques.
+- Propulsion : poussée ∝ (ρ/ρ0)^1,15 (calée sur les poussées statiques Stevens & Lewis), effet d'admission linéaire en Mach, borné à 1,3 × la poussée statique au sol.
+- Modules : `params.py` (YAML → dataclasses), `aero_polar.py`, `propulsion.py`, `dynamics_3dof.py` (dynamique, trim, instruments), `performance.py` (domaine de vol, virage, plafond).
+- Performances obtenues vs F-16 publié : Mach max 1,18 au sol (≈ 1,2) et 2,08 à 11 km (≈ 2,0) ; montée 275 m/s (≈ 250) ; virage soutenu 18,3 °/s à 3 km M0,8 (≈ 18–20) ; ≈ 10 600 pas physiques/s.
+- Limites connues : pas de décrochage, donc vitesse mini optimiste (≈ 45 m/s au sol contre ≈ 60–65 m/s réels) ; plafond aérodynamique 17,7 km contre 15,2 km publiés (limite opérationnelle) ; masse constante.
 
 ---
 
