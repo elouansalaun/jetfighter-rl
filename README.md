@@ -16,6 +16,15 @@ uv pip install -e ".[dev,rl]"     # + gymnasium / stable-baselines3 / torch (à 
 uv run pytest
 ```
 
+Avec conda (Miniconda / Anaconda) :
+
+```bash
+conda create -n jetfighter python=3.11 -y
+conda activate jetfighter
+pip install -e ".[dev]"
+pytest
+```
+
 Ou avec `venv` + `pip` :
 
 ```bash
@@ -63,3 +72,4 @@ notebooks/       # validations physiques et analyses
 - [x] Phase 1 — Fondations physiques (repères, atmosphère ISA, intégrateurs)
 - [x] Phase 2 — Modèle point-masse 3-DOF (`python scripts/phase2_performance.py` pour le domaine de vol)
 - [x] Phase 3 — Modèle 6-DOF avec tables F-16 Stevens & Lewis (`python scripts/phase3_validation.py`)
+- [x] Phase 4 — Instruments, capteurs bruités, enveloppe de vol (`python scripts/phase4_dashboard.py`)

@@ -207,20 +207,26 @@ Contrairement au F-22, le F-16 dispose de **données aérodynamiques publiées**
 ## Phase 4 — Instruments, capteurs et enveloppe de vol
 
 ### 4.1 Instruments (sorties observables)
-- [ ] Vitesses : TAS, CAS (approx.), Mach, vitesse verticale
-- [ ] Altitude, cap, attitude (φ, θ, ψ)
-- [ ] Incidence α, dérapage β
-- [ ] Vitesses angulaires p, q, r
-- [ ] Accélérations en corps, **facteur de charge Nz**
-- [ ] Énergie spécifique Es = h + V²/2g et excès de puissance Ps (très utile pour l'évitement de missile)
-- [ ] Option : bruit et biais capteurs (pour la robustesse, Phase 11)
+- [x] Vitesses : TAS, CAS (approx.), Mach, vitesse verticale
+- [x] Altitude, cap, attitude (φ, θ, ψ)
+- [x] Incidence α, dérapage β
+- [x] Vitesses angulaires p, q, r
+- [x] Accélérations en corps, **facteur de charge Nz**
+- [x] Énergie spécifique Es = h + V²/2g et excès de puissance Ps (très utile pour l'évitement de missile)
+- [x] Option : bruit et biais capteurs (pour la robustesse, Phase 11)
 
 ### 4.2 Enveloppe de vol et fins d'épisode
-- [ ] Collision sol (h < 0 ou h < h_min de sécurité)
-- [ ] Dépassement de facteur de charge (limite structurelle)
-- [ ] Décrochage prolongé / vrille (α > α_max pendant > N s)
-- [ ] Sortie de domaine (altitude > plafond, vitesse < V_min)
-- [ ] Détection NaN / divergence numérique → fin d'épisode + log
+- [x] Collision sol (h < 0 ou h < h_min de sécurité)
+- [x] Dépassement de facteur de charge (limite structurelle)
+- [x] Décrochage prolongé / vrille (α > α_max pendant > N s)
+- [x] Sortie de domaine (altitude > plafond, vitesse < V_min)
+- [x] Détection NaN / divergence numérique → fin d'épisode + log
+
+**Réalisé** (`instruments.py`, `sensors.py`, `envelope.py`, limites dans `configs/aircraft/f16.yaml` section `envelope`, démo : `scripts/phase4_dashboard.py`)
+- **Tableau de bord commun** aux modèles 3-DOF et 6-DOF (`read_instruments`) : 27 grandeurs (position, TAS/CAS/EAS, Mach, variomètre, γ/χ, attitude φ/θ/ψ, α/β, p/q/r, facteurs de charge nx/ny/nz, énergie E et Ps, poussée). Pour le 3-DOF, attitude et vitesses angulaires corps reconstruites à partir du repère vent et de α.
+- **CAS** exacte (pression d'impact isentropique en subsonique, formule de Rayleigh en supersonique) et son inverse.
+- **Capteurs** : bruit blanc + biais tiré à chaque épisode, par voie, reproductible (générateur fourni) ; parfaits par défaut ; exemple réaliste dans `configs/sensors/realistic.yaml`.
+- **Fins d'épisode** : NaN, sol, surcharge (−4 / +10 g), plafond (17 km), vitesse mini (50 m/s), Mach max (2.0 en 3-DOF, 0.95 en 6-DOF), dérapage (30°), décrochage prolongé (α > 30° pendant > 2 s).
 
 ---
 
