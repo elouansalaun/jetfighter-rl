@@ -232,10 +232,17 @@ Contrairement au F-22, le F-16 dispose de **données aérodynamiques publiées**
 
 ## Phase 5 — Visualisation et pilotage manuel
 
-- [ ] Tracés matplotlib : trajectoire 3D, séries temporelles (V, h, α, Nz, commandes)
-- [ ] **Export Tacview (.acmi)** : format texte simple, gratuit en lecture, rendu 3D très parlant pour analyser les manœuvres et les engagements missile
-- [ ] `scripts/fly_manual.py` : pilotage clavier ou joystick (`pygame`) — le meilleur test de sanité : si un humain ne peut pas faire voler le modèle, un agent RL non plus
-- [ ] Rejeu d'épisodes enregistrés (états + actions en `.npz`)
+- [x] Tracés matplotlib : trajectoire 3D, séries temporelles (V, h, α, Nz, commandes)
+- [x] **Export Tacview (.acmi)** : format texte simple, gratuit en lecture, rendu 3D très parlant pour analyser les manœuvres et les engagements missile
+- [x] `scripts/fly_manual.py` : pilotage clavier ou joystick (`pygame`) — le meilleur test de sanité : si un humain ne peut pas faire voler le modèle, un agent RL non plus
+- [x] Rejeu d'épisodes enregistrés (états + actions en `.npz`)
+
+**Réalisé** (`src/jetfighter/viz/` : `recorder.py`, `plots.py`, `tacview.py`, `manual.py` ; scripts `demo_flight.py` et `fly_manual.py`)
+- **Enregistreur** : temps, états, commandes, 27 instruments et événements → `.npz` ; **rejeu déterministe** (états retrouvés au bit près) ; le modèle est reconstruit à partir de l'enregistrement.
+- **Courbes** : tableau de bord temporel (8 graphiques) et trajectoire 3D avec trace au sol.
+- **Tacview** : export ACMI 2.2 (position, attitude, TAS/CAS/Mach/AOA/AOS/Throttle, événements), écrivain multi-objets prêt pour le missile (phase 9). Monde plat posé au-dessus de l'Atlantique (46° N, 6° O).
+- **Pilotage manuel** (pygame, extra `[viz]`) : horizon artificiel + instruments, manche à ressort au clavier (AZERTY/QWERTY), trim, joystick détecté automatiquement (non testé sur matériel réel), 3-DOF ou 6-DOF, sauvegarde automatique (.npz, .acmi, .png).
+- Démo `demo_flight.py` : looping puis tonneau enchaînés par un séquenceur qui surveille les instruments. En 6-DOF, régler ces figures « à la main » est délicat : motivation directe pour les phases 6 à 8.
 
 ---
 

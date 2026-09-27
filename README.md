@@ -12,6 +12,7 @@ Avec [uv](https://docs.astral.sh/uv/) (recommandé) :
 ```bash
 uv venv
 uv pip install -e ".[dev]"        # cœur + outils de dev
+uv pip install -e ".[dev,viz]"    # + pygame pour le pilotage manuel (phase 5)
 uv pip install -e ".[dev,rl]"     # + gymnasium / stable-baselines3 / torch (à partir de la phase 7)
 uv run pytest
 ```
@@ -21,7 +22,7 @@ Avec conda (Miniconda / Anaconda) :
 ```bash
 conda create -n jetfighter python=3.11 -y
 conda activate jetfighter
-pip install -e ".[dev]"
+pip install -e ".[dev,viz]"       # viz = pygame, pour le pilotage manuel
 pytest
 ```
 
@@ -73,3 +74,4 @@ notebooks/       # validations physiques et analyses
 - [x] Phase 2 — Modèle point-masse 3-DOF (`python scripts/phase2_performance.py` pour le domaine de vol)
 - [x] Phase 3 — Modèle 6-DOF avec tables F-16 Stevens & Lewis (`python scripts/phase3_validation.py`)
 - [x] Phase 4 — Instruments, capteurs bruités, enveloppe de vol (`python scripts/phase4_dashboard.py`)
+- [x] Phase 5 — Enregistrement/rejeu, courbes, export Tacview, pilotage manuel (`python scripts/demo_flight.py`, `python scripts/fly_manual.py`)
