@@ -159,7 +159,7 @@ Contrairement au F-22, le F-16 dispose de **données aérodynamiques publiées**
   - Facteur de charge +9 g / −3 g ; Mach max ≈ 2,0 ; plafond ≈ 15 000 m
 - **Coefficients aéro** : tables F-16 publiées (Stevens & Lewis ; Nguyen et al., NASA TP-1538), utilisées directement, sans mise à l'échelle
 - **Inerties** (Stevens & Lewis) : Ixx = 9 496, Iyy = 55 814, Izz = 63 100, Ixz = 982 slug·ft² → ≈ 12 875 / 75 674 / 85 552 / 1 331 kg·m²
-- [ ] Tout dans `configs/aircraft/f16.yaml` → pouvoir changer d'avion sans toucher au code
+- [x] Tout dans `configs/aircraft/f16.yaml` → pouvoir changer d'avion sans toucher au code
 
 ### 3.2 État (13 variables + moteur)
 - Position NED (3), vitesse corps u, v, w (3), quaternion (4), vitesses angulaires p, q, r (3)
@@ -174,26 +174,33 @@ Contrairement au F-22, le F-16 dispose de **données aérodynamiques publiées**
 | Gouvernes de direction δ_r | Lacet (Cn) | ±30° |
 
 ### 3.4 Forces et moments
-- [ ] Aéro : CL(α, δe, M), CD(α, M), CY(β, δr), Cl(β, δa, δr, p, r), Cm(α, δe, q), Cn(β, δa, δr, p, r)
+- [x] Aéro : CL(α, δe, M), CD(α, M), CY(β, δr), Cl(β, δa, δr, p, r), Cm(α, δe, q), Cn(β, δa, δr, p, r)
   - Tables d'interpolation en α et Mach (`scipy.interpolate.RegularGridInterpolator`)
   - Dérivées d'amortissement (Cmq, Clp, Cnr) : indispensables, sinon l'avion oscille sans fin
-- [ ] Propulsion : T(h, M, δ_T) avec baisse en altitude (∝ ρ/ρ₀ environ), dynamique moteur du 1er ordre (constante de temps ~1 s, plus lente pour allumer la PC)
-- [ ] Gravité en repère NED projetée en corps
-- [ ] Équations de Newton-Euler (forces en corps + terme ω × V ; moments avec tenseur d'inertie incluant Ixz)
+- [x] Propulsion : T(h, M, δ_T) avec baisse en altitude (∝ ρ/ρ₀ environ), dynamique moteur du 1er ordre (constante de temps ~1 s, plus lente pour allumer la PC)
+- [x] Gravité en repère NED projetée en corps
+- [x] Équations de Newton-Euler (forces en corps + terme ω × V ; moments avec tenseur d'inertie incluant Ixz)
 
 ### 3.5 Actionneurs
-- [ ] Saturation en position **et** en vitesse (ex. 60°/s pour les gouvernes)
-- [ ] Retard du 1er ordre (τ ≈ 0,05 s)
+- [x] Saturation en position **et** en vitesse (ex. 60°/s pour les gouvernes)
+- [x] Retard du 1er ordre (τ ≈ 0,05 s)
 - → Évite que l'agent RL apprenne des commandes « bang-bang » physiquement impossibles
 
 ### Tests de validation (dans `notebooks/`)
-- [ ] **Trim** : trouver (α, δe, δ_T) pour le vol en palier à plusieurs vitesses / altitudes (optimisation `scipy.optimize`)
-- [ ] **Modes propres** : linéariser autour du trim, vérifier la présence d'une oscillation d'incidence rapide (*short period*, ~1–3 s) et d'un phugoïde lent (~30–100 s)
-- [ ] **Réponses indicielles** : échelon de profondeur, d'ailerons, de direction — signes et ordres de grandeur cohérents
-- [ ] **Conservation de l'énergie** sans traînée ni poussée
-- [ ] **Cohérence 3-DOF vs 6-DOF** sur un virage stabilisé
+- [x] **Trim** : trouver (α, δe, δ_T) pour le vol en palier à plusieurs vitesses / altitudes (optimisation `scipy.optimize`)
+- [x] **Modes propres** : linéariser autour du trim, vérifier la présence d'une oscillation d'incidence rapide (*short period*, ~1–3 s) et d'un phugoïde lent (~30–100 s)
+- [x] **Réponses indicielles** : échelon de profondeur, d'ailerons, de direction — signes et ordres de grandeur cohérents
+- [x] **Conservation** sans aéro ni poussée ni gravité : énergie de rotation et moment cinétique (moteur inclus) conservés
+- [ ] **Cohérence 3-DOF vs 6-DOF** sur un virage stabilisé (fait en palier seulement ; le virage demande un pilote automatique, phase 6)
 
 > ⚠️ Point d'attention : un F-16 réel est **instable par conception** et piloté via des commandes de vol électriques. Pour le RL, deux options : (a) rendre le modèle légèrement stable statiquement (plus facile), (b) garder l'instabilité et ajouter une loi de commande de stabilisation (Phase 6). Commencer par (a).
+
+**Réalisé** (`dynamics_6dof.py`, `f16_aero.py`, `analysis.py`, tables dans `configs/aircraft/f16_sl_tables.yaml`, validation : `scripts/phase3_validation.py`)
+- Tables aéro et moteur Stevens & Lewis complètes (données NASA TP-1538), réimplémentées (le code de référence AeroBench est sous GPL-3 : seules les valeurs numériques ont été reprises).
+- Vérifications : dérivées identiques à l'implémentation de référence à 2·10⁻⁴ près sur 300 états aléatoires (écart = arrondi des constantes d'inertie du livre) ; cas de vérification publié retrouvé sur 11 dérivées sur 13 (ṗ et ṙ diffèrent de ≈ 0.001 sur Cl dans toutes les implémentations disponibles) ; trim publié retrouvé (manette 0.1385, δe −0.759°).
+- **Centrage** : au nominal x_cg = 0.35, l'avion est instable en tangage (temps de doublement ≈ 7 s), comme le vrai F-16. Option (a) retenue : x_cg = 0.30 par défaut → avion stable dans tout le domaine subsonique (sauf divergence lente de second régime à α > 11°). Le 0.35 reste disponible pour la phase 6.
+- Modes à 3000 m / 200 m/s : oscillation d'incidence ω = 2.1 rad/s ζ = 0.56 ; phugoïde 107 s ; roulis hollandais 1.8 s ζ = 0.12 ; roulis τ = 0.28 s ; spirale stable.
+- Limites : tables sans effet du Mach (fiables jusqu'à ≈ Mach 0.6–0.8) ; ≈ 1 700–2 000 pas physiques/s en Python pur (à accélérer en phase 7) ; cohérence 3-DOF/6-DOF vérifiée sur l'incidence d'équilibre en palier (< 1°), pas encore en virage.
 
 ---
 

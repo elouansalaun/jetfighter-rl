@@ -62,4 +62,4 @@ notebooks/       # validations physiques et analyses
 - [x] Phase 0 — Cadrage et outillage
 - [x] Phase 1 — Fondations physiques (repères, atmosphère ISA, intégrateurs)
 - [x] Phase 2 — Modèle point-masse 3-DOF (`python scripts/phase2_performance.py` pour le domaine de vol)
-- [ ] Phase 3 — Modèle 6-DOF
+- [x] Phase 3 — Modèle 6-DOF avec tables F-16 Stevens & Lewis (`python scripts/phase3_validation.py`)
