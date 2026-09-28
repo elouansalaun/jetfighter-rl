@@ -27,6 +27,7 @@ viz = [
     "pygame>=2.5",
 ]
 dev = [
+    "gymnasium>=0.29",  # tests des environnements (léger, sans torch)
     "pytest>=8.0",
     "pytest-cov>=5.0",
     "ruff>=0.6",

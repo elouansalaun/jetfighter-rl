@@ -76,3 +76,4 @@ notebooks/       # validations physiques et analyses
 - [x] Phase 4 — Instruments, capteurs bruités, enveloppe de vol (`python scripts/phase4_dashboard.py`)
 - [x] Phase 5 — Enregistrement/rejeu, courbes, export Tacview, pilotage manuel (`python scripts/demo_flight.py`, `python scripts/fly_manual.py`)
 - [x] Phase 6 — Commandes de vol électriques, pilote automatique, LQR (`python scripts/phase6_autopilot.py`)
+- [x] Phase 7 — Environnement Gymnasium `JetEnv`, tâches, références, essai PPO (`python scripts/phase7_env_check.py --ppo-steps 100000`)

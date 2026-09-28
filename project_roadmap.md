@@ -6,6 +6,16 @@
 
 ---
 
+## Journal des décisions
+
+| Date | Décision | Raison | Conséquences |
+|---|---|---|---|
+| 27/09/2026 | Avion de référence : **F-16** (au lieu du F-22) | Données aérodynamiques publiques (NASA TP-1538, Stevens & Lewis) | Tables réelles dans le modèle 6-DOF (phase 3) |
+| 27/09/2026 | Centrage par défaut **x_cg = 0.30** (option (a) de la phase 3) | Avion naturellement stable, plus simple pour démarrer | x_cg = 0.35 (instable, comme le vrai F-16) reste disponible ; les commandes de vol électriques de la phase 6 le stabilisent |
+| 27/09/2026 | Agent **hiérarchique d'abord, bas niveau ensuite** | Apprentissage bien plus rapide ; permet de valider toute la chaîne RL (environnement, récompenses, curriculum) avant d'attaquer le problème difficile | Phases 7, 8 et 10 en deux temps : l'agent commande d'abord (n_z, taux de roulis, manette) via les commandes de vol électriques, puis directement les gouvernes. La commande directe reste l'**objectif final** du projet |
+
+---
+
 ## Vue d'ensemble
 
 | Phase | Contenu | Livrable clé | Durée indicative* |
@@ -17,8 +27,8 @@
 | 4 | Instruments, capteurs, enveloppe de vol | Tableau de bord + conditions de fin d'épisode | 1 semaine |
 | 5 | Visualisation et pilotage manuel | Tracés, export Tacview, pilotage clavier | 1 semaine |
 | 6 | Contrôleurs classiques (baseline) | Pilote automatique PID | 1–2 semaines |
-| 7 | Environnement Gymnasium | `JetEnv` conforme `check_env` | 1 semaine |
-| 8 | Curriculum de manœuvres RL | Agents : stabilisation → virage → voltige | 3–5 semaines |
+| 7 | Environnement Gymnasium | `JetEnv` conforme `check_env`, modes hiérarchique et bas niveau | 1 semaine |
+| 8 | Curriculum de manœuvres RL | Agents hiérarchiques, puis bas niveau : stabilisation → virage → voltige | 3–5 semaines |
 | 9 | Modèle de missile (générique) | Missile à navigation proportionnelle | 1–2 semaines |
 | 10 | RL d'évitement de missile | Agent d'évasion + carte de survie | 3–5 semaines |
 | 11 | Extensions | Robustesse, multi-menaces, JSBSim, self-play | ouvert |
@@ -152,7 +162,7 @@ L  = q̄·S·CL(α, M)      D = q̄·S·(CD0(M) + k·CL²)
 ### 3.1 Paramètres « F-16-like »
 Contrairement au F-22, le F-16 dispose de **données aérodynamiques publiées** (soufflerie NASA, reprises par Stevens & Lewis) : c'est ce qui rend ce choix pertinent. Approche retenue :
 - **Masse, géométrie, poussée** (valeurs publiques approximatives, à sourcer dans le YAML)
-  - Masse de référence du modèle Stevens & Lewis : 20 500 lb ≈ 9 300 kg (F-16C : ≈ 8 600 kg à vide, ≈ 19 200 kg max au décollage)
+  - Masse de référence du modèle Stevens & Lewis : 1/m = 1,57·10⁻³ slug⁻¹, soit ≈ 9 295 kg (≈ 20 490 lb) (F-16C : ≈ 8 600 kg à vide, ≈ 19 200 kg max au décollage)
   - Envergure 9,14 m (30 ft), longueur ≈ 15,0 m, surface alaire 27,87 m² (300 ft²), corde moyenne 3,45 m (11,32 ft)
   - 1 moteur (F100-PW-229 ou F110-GE-129) : ≈ 76–79 kN à sec, ≈ 129–131 kN avec PC ; le modèle Stevens & Lewis utilise les tables de poussée d'un F100 plus ancien
   - Pas de vectorisation de poussée
@@ -255,14 +265,14 @@ Contrairement au F-22, le F-16 dispose de **données aérodynamiques publiées**
 - [x] Option : LQR sur le modèle linéarisé autour du trim
 - [~] Heuristiques d'évitement de missile scriptées (pour la Phase 10) — mise en travers (*beam*), fuite (*drag*), virage serré de dernière seconde : primitives géométriques prêtes ; la logique complète attend le missile (phase 9)
 
-**Décision d'architecture à prendre à cette étape** :
+**Décision d'architecture** (prise le 27/09/2026, cf. journal des décisions) :
 
 | Option | L'agent commande… | + | − |
 |---|---|---|---|
 | Bas niveau | directement les gouvernes et la manette | fidèle à l'objectif initial | apprentissage long et instable |
 | Hiérarchique | des consignes (Nz, taux de roulis, poussée) suivies par un contrôleur | apprentissage beaucoup plus rapide | dépend de la qualité du contrôleur |
 
-→ Recommandation : **commencer hiérarchique**, puis descendre au bas niveau une fois le pipeline validé.
+→ **Décision : hiérarchique d'abord, puis bas niveau.** L'agent pilote d'abord via `HighLevelCommand` (n_z, taux de roulis, manette) exécutée par les commandes de vol électriques ; une fois les tâches maîtrisées, on repasse en commande directe des gouvernes (étape 8.6, puis phase 10).
 
 **Réalisé** (`src/jetfighter/control/` : `pid.py`, `fbw.py`, `autopilot.py`, `lqr.py`, `maneuvers.py` ; démo : `scripts/phase6_autopilot.py`)
 - **Interface commune de haut niveau** `HighLevelCommand(nz, roll_rate, throttle)`, exécutée par une boucle interne propre à chaque modèle (`make_inner_loop`) : c'est l'espace d'action de l'option **hiérarchique** pour le RL.
@@ -271,23 +281,40 @@ Contrairement au F-22, le F-16 dispose de **données aérodynamiques publiées**
 - **LQR** longitudinal sur le modèle linéarisé : stabilise x_cg = 0.35 et 0.40 autour du point de conception (l'avion libre diverge).
 - **Primitives d'évitement** : gisements, cap de mise en travers (*beam*), cap de fuite (*drag*), virage serré vers la menace (*break turn*).
 - Enseignement : l'inclinaison à asservir est celle du **vecteur portance** (μ), pas la gîte du fuselage (φ) ; l'écart, négligeable en croisière, fait échouer les virages serrés (ajout de `bank` au tableau de bord).
-- Limite : la décision « bas niveau ou hiérarchique » pour l'agent reste à prendre en phase 7 (les deux sont maintenant possibles).
+- Les deux options sont possibles techniquement ; décision prise : **hiérarchique d'abord, bas niveau ensuite** (voir plus haut).
 
 ---
 
 ## Phase 7 — Environnement Gymnasium
 
-- [ ] Classe `JetEnv(gymnasium.Env)` : `reset(seed)`, `step(action)`, `render()`
-- [ ] **Espace d'action** continu `Box(-1, 1)` remappé vers les plages physiques
-- [ ] **Espace d'observation** normalisé (≈ [−1, 1]) :
-  - états propres : V/V_ref, h/h_ref, sin/cos des angles (pas les angles bruts → discontinuité à ±180°), α, β, p, q, r, Nz, manette
-  - erreur par rapport à la cible, exprimée **dans le repère avion** (invariance par rotation)
-- [ ] Récompense dans `rewards.py`, modulaire (somme de termes pondérés, chaque terme loggé séparément)
-- [ ] Distinction `terminated` (crash, succès) / `truncated` (limite de temps)
-- [ ] Randomisation des conditions initiales (altitude, vitesse, cap, attitude)
-- [ ] `gymnasium.utils.env_checker.check_env` passe
-- [ ] Environnements vectorisés (`SubprocVecEnv`) ; mesurer les pas/seconde (objectif : > 5 000 pas/s en 3-DOF)
-- [ ] Option perf : `numba` sur la dynamique si le débit est insuffisant
+- [x] Classe `JetEnv(gymnasium.Env)` : `reset(seed)`, `step(action)`, `render()`
+- [x] **Espace d'action** continu `Box(-1, 1)` remappé vers les plages physiques, avec **deux modes** (paramètre `action_mode`) :
+  - `"hierarchical"` — **par défaut, à faire en premier** : [n_z, taux de roulis, manette] → `HighLevelCommand` → boucle interne (`make_inner_loop`). Même espace d'action en 3-DOF et en 6-DOF ;
+  - `"low_level"` — **dans un second temps** : 6-DOF [manette, δe, δa, δr] (gouvernes directes, sans limiteurs) ; 3-DOF [manette, α, taux de roulis] (ce modèle n'a pas de gouvernes) ;
+  - fréquences : physique 100 Hz, boucle interne 50 Hz, décision de l'agent 10 Hz
+- [x] **Espace d'observation** normalisé (≈ [−1, 1]) :
+  - états propres : V/V_ref, h/h_ref, sin/cos des angles (pas les angles bruts → discontinuité à ±180°), inclinaison μ, α, β, p, q, r, Nz, manette
+  - [~] en mode bas niveau : position des gouvernes en plus — pour l'instant, l'action précédente (= consigne des gouvernes) ; la position réelle des actionneurs reste à ajouter si l'agent bas niveau en a besoin (étape 8.6)
+  - [~] erreur par rapport à la cible : en écarts relatifs (Δh, sin/cos Δcap, ΔV), suffisant pour ces tâches ; l'expression **dans le repère avion** sera nécessaire pour les cibles 3D (poursuite, missile)
+- [x] Récompense dans `rewards.py`, modulaire (somme de termes pondérés, chaque terme loggé séparément)
+- [x] Distinction `terminated` (crash, succès) / `truncated` (limite de temps)
+- [x] Randomisation des conditions initiales (altitude, vitesse, cap, attitude)
+- [x] `gymnasium.utils.env_checker.check_env` passe
+- [~] Environnements vectorisés (`SubprocVecEnv`) ; mesurer les pas/seconde (objectif : > 5 000 pas/s en 3-DOF) — mesuré, objectif non atteint par cœur (voir ci-dessous)
+- [ ] Option perf : `numba` sur la dynamique si le débit est insuffisant — reporté à la phase 8, si les entraînements s'avèrent trop longs
+
+**Réalisé** (`src/jetfighter/envs/` : `jet_env.py`, `tasks.py`, `rewards.py`, `baselines.py` ; vérification : `scripts/phase7_env_check.py`)
+- **Identifiants** `gymnasium.make("JetFighter/Level-v0")` et `"JetFighter/HeadingAltitude-v0"`, paramètres surchargeables (`model="6dof"`, `action_mode="low_level"`, `sensors="realistic"`, `record=True`…). `check_env` passe sur les 8 combinaisons tâche × modèle × mode.
+- **Tâches** (`tasks.py`, une classe par tâche : conditions initiales, observations propres, termes de récompense, critère de succès, consignes du pilote auto) :
+  - `level` (30 s) — rattrapage d'assiette inusuelle (μ ±80°, γ ±25°, roulis ±60°/s) → palier ailes horizontales ;
+  - `heading_altitude` (90 s) — rallier un cap, une altitude (±1 500 m) et une vitesse tirés au hasard.
+- **Observation** : 19 grandeurs propres (lues via les **capteurs**, bruités si demandé) + action précédente + erreurs de la tâche, bornées à ±10, `float32`.
+- **Récompense** : termes pondérés dans [−1, 0] par pas + bonus de succès, pénalité de lissage des actions, −50 en cas de sortie d'enveloppe/crash ; détail par terme dans `info["reward_terms"]` et `info["episode_terms"]`.
+- **Conditions initiales** : équilibre à la pente demandée, sinon équilibre en palier auquel on impose pente, inclinaison et roulis (les piqués raides n'ont pas d'équilibre).
+- **Enregistrement** optionnel de l'épisode (rejeu exact, export Tacview).
+- **Références** (3-DOF, 6 épisodes) : pilote automatique `level` rendement ≈ 19–20, 100 % de succès ; `heading_altitude` ≈ 40–55, 100 % de succès ; politique aléatoire ≈ −200 / −325 (100 % de crash sur `heading_altitude`). Le pilote auto réussit aussi en 6-DOF.
+- **Débit** (VM 2 cœurs) : 3-DOF ≈ 480 pas d'agent/s pour 1 env, ≈ 590 avec 2 env ; 6-DOF ≈ 120 / 190. Un pas d'agent = 5 pas de contrôle + 10 pas de physique RK4 : ≈ 4 800 pas de physique/s en 3-DOF. Le goulot est la dynamique en Python pur ; attendu ≈ 4–5 k pas/s sur 8 cœurs. `numba` reporté.
+- **Essai PPO** (stable-baselines3, `level`, 3-DOF, hiérarchique, 2 env) : 100 % de succès dès ≈ 25 k pas, rendement 20.5 à 49 k pas (≥ pilote auto), ≈ 2 min 30 s. La chaîne complète (env → PPO → TensorBoard → modèle → vol Tacview) fonctionne.
 
 ---
 
@@ -307,6 +334,11 @@ Contrairement au F-22, le F-16 dispose de **données aérodynamiques publiées**
 | 8.3 | Virage coordonné à taux maximal soutenu | Taux proche de l'optimum, β ≈ 0 | + taux de virage − β² − perte d'énergie |
 | 8.4 | Suivi de points de passage | Enchaînement de waypoints 3D | − distance + bonus par waypoint |
 | 8.5 | Voltige : looping, tonneau, Immelmann, Split-S | Trajectoire conforme à une référence | suivi de trajectoire de référence |
+| 8.6 | **Passage au bas niveau** : reprendre 8.1 → 8.5 en mode `low_level` sur le 6-DOF | ≥ 90 % des performances de l'agent hiérarchique, sans dépasser les limites structurales (plus de limiteurs pour le protéger) | mêmes récompenses + pénalité de surcharge et de dérapage |
+
+**Ordre retenu** (décision du 27/09/2026) : tâches 8.1 → 8.5 en **mode hiérarchique** (3-DOF puis 6-DOF), puis 8.6 en **bas niveau**. Pistes pour faciliter 8.6 :
+- initialiser la politique bas niveau par **imitation** (clonage de comportement) de l'ensemble « agent hiérarchique + commandes de vol » ;
+- ou **RL résiduel** : l'agent apprend une correction ajoutée aux commandes de vol, qu'on réduit progressivement jusqu'à la commande directe.
 
 **Bonnes pratiques** :
 - [ ] Commencer en 3-DOF, transférer en 6-DOF ensuite
@@ -351,11 +383,13 @@ Contrairement au F-22, le F-16 dispose de **données aérodynamiques publiées**
 3. Distances de tir plus courtes, aspects défavorables
 4. Passage de l'information complète à l'information partielle
 5. Passage du 3-DOF au 6-DOF
+6. Passage du mode hiérarchique au mode bas niveau (même démarche qu'en 8.6)
 
 ### 10.4 Évaluation
 - [ ] Taux de survie sur un banc de tests fixe (graines figées)
 - [ ] **Carte de survie** : heatmap du taux de survie en fonction (distance de tir × angle d'aspect), comparée aux heuristiques scriptées de la Phase 6 → c'est le résultat le plus parlant du projet
 - [ ] Analyse qualitative des stratégies apprises dans Tacview (l'agent redécouvre-t-il la mise en travers ou la fuite ?)
+- [ ] Comparaison agent hiérarchique / agent bas niveau : la commande directe apporte-t-elle un gain (manœuvres au-delà des limiteurs) ou seulement de la difficulté ?
 
 ---
 
@@ -388,8 +422,9 @@ Contrairement au F-22, le F-16 dispose de **données aérodynamiques publiées**
 1. **J1** — L'avion 3-DOF vole en palier et vire correctement (fin Phase 2)
 2. **J2** — L'avion 6-DOF est pilotable au clavier et visible dans Tacview (fin Phase 5)
 3. **J3** — Un agent PPO stabilise l'avion et atteint un cap / une altitude (Phase 8.2)
-4. **J4** — Un agent exécute un looping et un virage à taux max (Phase 8.5)
-5. **J5** — Un agent évite un missile mieux que les heuristiques scriptées, carte de survie à l'appui (Phase 10)
+4. **J4** — Un agent (hiérarchique) exécute un looping et un virage à taux max (Phase 8.5)
+5. **J4b** — Un agent **bas niveau** (gouvernes directes, 6-DOF) égale l'agent hiérarchique sur les tâches 8.1 → 8.5 (Phase 8.6)
+6. **J5** — Un agent évite un missile mieux que les heuristiques scriptées, carte de survie à l'appui — d'abord en hiérarchique, puis en bas niveau (Phase 10)
 
 ---
 
