@@ -75,3 +75,4 @@ notebooks/       # validations physiques et analyses
 - [x] Phase 3 — Modèle 6-DOF avec tables F-16 Stevens & Lewis (`python scripts/phase3_validation.py`)
 - [x] Phase 4 — Instruments, capteurs bruités, enveloppe de vol (`python scripts/phase4_dashboard.py`)
 - [x] Phase 5 — Enregistrement/rejeu, courbes, export Tacview, pilotage manuel (`python scripts/demo_flight.py`, `python scripts/fly_manual.py`)
+- [x] Phase 6 — Commandes de vol électriques, pilote automatique, LQR (`python scripts/phase6_autopilot.py`)

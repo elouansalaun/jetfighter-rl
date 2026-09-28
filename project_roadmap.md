@@ -191,7 +191,7 @@ Contrairement au F-22, le F-16 dispose de **données aérodynamiques publiées**
 - [x] **Modes propres** : linéariser autour du trim, vérifier la présence d'une oscillation d'incidence rapide (*short period*, ~1–3 s) et d'un phugoïde lent (~30–100 s)
 - [x] **Réponses indicielles** : échelon de profondeur, d'ailerons, de direction — signes et ordres de grandeur cohérents
 - [x] **Conservation** sans aéro ni poussée ni gravité : énergie de rotation et moment cinétique (moteur inclus) conservés
-- [ ] **Cohérence 3-DOF vs 6-DOF** sur un virage stabilisé (fait en palier seulement ; le virage demande un pilote automatique, phase 6)
+- [x] **Cohérence 3-DOF vs 6-DOF** sur un virage stabilisé (vérifiée en phase 6 avec le pilote automatique : taux de virage à 4 et 5 g à moins de 5 % près)
 
 > ⚠️ Point d'attention : un F-16 réel est **instable par conception** et piloté via des commandes de vol électriques. Pour le RL, deux options : (a) rendre le modèle légèrement stable statiquement (plus facile), (b) garder l'instabilité et ajouter une loi de commande de stabilisation (Phase 6). Commencer par (a).
 
@@ -223,7 +223,7 @@ Contrairement au F-22, le F-16 dispose de **données aérodynamiques publiées**
 - [x] Détection NaN / divergence numérique → fin d'épisode + log
 
 **Réalisé** (`instruments.py`, `sensors.py`, `envelope.py`, limites dans `configs/aircraft/f16.yaml` section `envelope`, démo : `scripts/phase4_dashboard.py`)
-- **Tableau de bord commun** aux modèles 3-DOF et 6-DOF (`read_instruments`) : 27 grandeurs (position, TAS/CAS/EAS, Mach, variomètre, γ/χ, attitude φ/θ/ψ, α/β, p/q/r, facteurs de charge nx/ny/nz, énergie E et Ps, poussée). Pour le 3-DOF, attitude et vitesses angulaires corps reconstruites à partir du repère vent et de α.
+- **Tableau de bord commun** aux modèles 3-DOF et 6-DOF (`read_instruments`) : 28 grandeurs (position, TAS/CAS/EAS, Mach, variomètre, γ/χ, inclinaison μ du vecteur portance (ajoutée en phase 6), attitude φ/θ/ψ, α/β, p/q/r, facteurs de charge nx/ny/nz, énergie E et Ps, poussée). Pour le 3-DOF, attitude et vitesses angulaires corps reconstruites à partir du repère vent et de α.
 - **CAS** exacte (pression d'impact isentropique en subsonique, formule de Rayleigh en supersonique) et son inverse.
 - **Capteurs** : bruit blanc + biais tiré à chaque épisode, par voie, reproductible (générateur fourni) ; parfaits par défaut ; exemple réaliste dans `configs/sensors/realistic.yaml`.
 - **Fins d'épisode** : NaN, sol, surcharge (−4 / +10 g), plafond (17 km), vitesse mini (50 m/s), Mach max (2.0 en 3-DOF, 0.95 en 6-DOF), dérapage (30°), décrochage prolongé (α > 30° pendant > 2 s).
@@ -250,10 +250,10 @@ Contrairement au F-22, le F-16 dispose de **données aérodynamiques publiées**
 
 **But** : disposer d'une référence pour juger l'agent RL, et d'une couche basse optionnelle pour un RL hiérarchique.
 
-- [ ] Amortisseurs de tangage / roulis / lacet (*stability augmentation*)
-- [ ] PID : maintien de vitesse, d'altitude, de cap, virage coordonné (β → 0)
-- [ ] Option : LQR sur le modèle linéarisé autour du trim
-- [ ] Heuristiques d'évitement de missile scriptées (pour la Phase 10) : virage de mise en travers (*beam*), fuite (*drag*), virage serré de dernière seconde
+- [x] Amortisseurs de tangage / roulis / lacet (*stability augmentation*)
+- [x] PID : maintien de vitesse, d'altitude, de cap, virage coordonné (β → 0)
+- [x] Option : LQR sur le modèle linéarisé autour du trim
+- [~] Heuristiques d'évitement de missile scriptées (pour la Phase 10) — mise en travers (*beam*), fuite (*drag*), virage serré de dernière seconde : primitives géométriques prêtes ; la logique complète attend le missile (phase 9)
 
 **Décision d'architecture à prendre à cette étape** :
 
@@ -263,6 +263,15 @@ Contrairement au F-22, le F-16 dispose de **données aérodynamiques publiées**
 | Hiérarchique | des consignes (Nz, taux de roulis, poussée) suivies par un contrôleur | apprentissage beaucoup plus rapide | dépend de la qualité du contrôleur |
 
 → Recommandation : **commencer hiérarchique**, puis descendre au bas niveau une fois le pipeline validé.
+
+**Réalisé** (`src/jetfighter/control/` : `pid.py`, `fbw.py`, `autopilot.py`, `lqr.py`, `maneuvers.py` ; démo : `scripts/phase6_autopilot.py`)
+- **Interface commune de haut niveau** `HighLevelCommand(nz, roll_rate, throttle)`, exécutée par une boucle interne propre à chaque modèle (`make_inner_loop`) : c'est l'espace d'action de l'option **hiérarchique** pour le RL.
+- **Commandes de vol électriques 6-DOF** : PI sur n_z + amortissement en q, PI sur le taux de roulis, β → 0 + amortisseur de lacet (filtre passe-haut), limiteurs de facteur de charge (−3/+9 g) et d'incidence (≤ 25°), gains programmés en q̄. Gains réglés par recherche systématique en simulation : échelon 1 → 4 g en 0.4–0.9 s ; 90°/s en roulis en 0.2–0.3 s avec |β| < 1°. **Elles stabilisent l'avion aux centrages instables** (0.35, 0.40) : l'option (b) de la phase 3 est désormais disponible.
+- **Pilote automatique** (mêmes gains pour 3-DOF et 6-DOF) : altitude → vitesse verticale → pente → n_z (+ 1/cos μ en virage), cap → inclinaison μ → taux de roulis, vitesse → manette. Les deux modèles volent la même mission de façon quasi identique (figure `outputs/phase6_mission.png`).
+- **LQR** longitudinal sur le modèle linéarisé : stabilise x_cg = 0.35 et 0.40 autour du point de conception (l'avion libre diverge).
+- **Primitives d'évitement** : gisements, cap de mise en travers (*beam*), cap de fuite (*drag*), virage serré vers la menace (*break turn*).
+- Enseignement : l'inclinaison à asservir est celle du **vecteur portance** (μ), pas la gîte du fuselage (φ) ; l'écart, négligeable en croisière, fait échouer les virages serrés (ajout de `bank` au tableau de bord).
+- Limite : la décision « bas niveau ou hiérarchique » pour l'agent reste à prendre en phase 7 (les deux sont maintenant possibles).
 
 ---
 
