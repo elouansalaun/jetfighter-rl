@@ -6,7 +6,9 @@ TensorBoard **quel terme** pilote l'apprentissage (et de repérer le *reward hac
 
 Conventions : les termes de coût sont **négatifs** et normalisés à peu près dans [−1, 0]
 par pas de décision ; les bonus sont petits et positifs ; la pénalité de crash est
-ponctuelle et grande (elle doit dominer tout ce que l'agent pourrait gagner en « trichant »).
+ponctuelle et grande : pénalité fixe **plus le coût maximal de tous les pas restants**
+(``Task.max_step_cost``), pour que s'écraser soit toujours pire que de continuer à voler,
+même loin de la consigne (sinon l'agent apprendrait à abréger les épisodes).
 """
 
 from __future__ import annotations

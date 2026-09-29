@@ -1,0 +1,25 @@
+# Variante de 8.2 : imitation du pilote automatique (DART, 40 épisodes), critique entraîné
+# seul pendant 5 collectes, puis PPO prudent (pas d'apprentissage réduit, petit bruit).
+# Motif : PPO seul est trop irrégulier sur 8.2 (3 exécutions sur le Mac : 90 %, 60 %, 20 %
+# de réussite pour le meilleur modèle) ; l'imitation part d'emblée du niveau de la référence.
+name: 8_2_heading_altitude_imitation
+description: Cap / altitude / vitesse, imitation de la référence puis PPO (3-DOF)
+env:
+  task: heading_altitude
+  model: 3dof
+  action_mode: hierarchical
+algo: ppo
+total_timesteps: 1000000
+n_envs: 8
+seeds: [0, 1, 2]
+hyperparams:
+  n_steps: 1024
+  batch_size: 1024
+  learning_rate: 5.0e-5
+  lr_final: 1.0e-5
+  clip_range: 0.1
+  gamma: 0.99
+  policy_kwargs: {log_std_init: -2.0}
+eval: {freq: 50000, episodes: 10}
+init_from: null
+pretrain: {episodes: 40, noise: 0.1, epochs: 30, critic_warmup: 5}

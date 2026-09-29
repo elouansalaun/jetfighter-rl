@@ -92,7 +92,7 @@ def test_truncation_and_episode_info():
     for _ in range(10):
         _, reward, terminated, truncated, info = env.step(np.zeros(3, dtype=np.float32))
         assert not terminated
-        assert set(info["reward_terms"]) >= {"bank", "gamma", "smoothness", "success"}
+        assert set(info["reward_terms"]) >= {"bank", "gamma", "speed", "smoothness", "success"}
         assert reward == pytest.approx(sum(info["reward_terms"].values()))
     assert truncated and info["t"] == pytest.approx(1.0)
     assert "episode_terms" in info and "is_success" in info
@@ -107,7 +107,10 @@ def test_crash_terminates_with_penalty():
         obs, _, terminated, truncated, info = env.step(push)
         if terminated or truncated:
             break
-    assert terminated and info["reward_terms"]["crash"] == env.task.crash_penalty
+    remaining = (env.episode_time - info["t"]) / env.cfg.agent_dt
+    horizon = 1 / (1 - env.cfg.discount)
+    expected = env.task.crash_penalty - env.task.max_step_cost * min(remaining, horizon)
+    assert terminated and info["reward_terms"]["crash"] == pytest.approx(expected)
     assert info["violation"] and not info["is_success"]
     assert np.all(np.isfinite(obs))
 
@@ -169,3 +172,60 @@ def test_autopilot_baseline_solves_task_and_beats_random(task):
 def test_autopilot_policy_requires_hierarchical_mode():
     with pytest.raises(ValueError):
         AutopilotPolicy(JetEnv(EnvConfig(action_mode="low_level")))
+
+
+@pytest.mark.parametrize(("speed", "action", "limit"), [(290, -1.0, -3.6), (290, 1.0, 9.2)])
+def test_fbw_load_factor_limiter_does_not_overshoot(speed, action, limit):
+    """Échelon de n_z à pleine commande à grande vitesse : pas de sortie d'enveloppe."""
+    env = JetEnv(EnvConfig(task="level", model="6dof", episode_time=3.0))
+    env.reset(seed=0, options={"initial_condition": InitialCondition(5000, speed)})
+    extreme = 1.0
+    done = False
+    while not done:
+        _, _, terminated, truncated, info = env.step(np.array([action, 0, 0.5], np.float32))
+        nz = env.instruments.nz
+        extreme = min(extreme, nz) if action < 0 else max(extreme, nz)
+        done = terminated or truncated
+    assert not info["violation"]
+    assert (extreme > limit) if action < 0 else (extreme < limit)
+
+
+def test_expo_action_mapping_option():
+    a = np.array([0.5, -0.5, 0.0])
+    cmd = action_to_command(a, 180 * DEG, exponent=3.0)
+    assert cmd.nz == pytest.approx(1 + 8 * 0.125) and cmd.roll_rate == pytest.approx(
+        -0.125 * math.pi
+    )
+    np.testing.assert_allclose(command_to_action(cmd, 180 * DEG, exponent=3.0), a, atol=1e-12)
+    env = JetEnv(EnvConfig(action_exponent=3.0))
+    check_env(env, skip_render_check=True)
+
+
+def test_attitude_features_are_continuous_through_the_vertical():
+    """Passage de la verticale en looping : les angles d'Euler basculent de 180°, pas les
+    composantes de la pesanteur utilisées dans l'observation."""
+    env = JetEnv(EnvConfig(task="aerobatics", task_kwargs={"maneuvers": "loop"}))
+    policy = AutopilotPolicy(env)
+    obs, _ = env.reset(seed=3)
+    policy.reset()
+    prev, jumps_euler, jump_obs = None, 0, 0.0
+    for _ in range(300):
+        obs, _, terminated, truncated, _ = env.step(policy(obs))
+        bank = env.instruments.bank
+        if prev is not None:
+            jumps_euler += abs(math.remainder(bank - prev[0], 2 * math.pi)) > 2.0
+            jump_obs = max(jump_obs, float(np.max(np.abs(obs[4:10] - prev[1]))))
+        prev = (bank, obs[4:10].copy())
+        if terminated or truncated:
+            break
+    assert jumps_euler >= 1  # l'inclinaison μ bascule bien au sommet de la boucle
+    assert jump_obs < 0.5  # mais pas l'observation
+
+
+def test_old_runs_keep_euler_attitude_features(tmp_path):
+    pytest.importorskip("stable_baselines3")
+    from jetfighter.rl.config import TrainConfig
+    from jetfighter.rl.train import run_config_of
+
+    TrainConfig(name="old", env={"task": "level"}).save(tmp_path / "config.yaml")
+    assert run_config_of(tmp_path / "seed0" / "best_model.zip").env["attitude_features"] == "euler"

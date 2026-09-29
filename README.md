@@ -36,6 +36,41 @@ pytest
 
 Qualité de code : `ruff check . && ruff format .` (ou `pre-commit install` pour l'automatiser).
 
+## Entraîner un agent (phase 8)
+
+Installer les dépendances d'apprentissage : `uv pip install -e ".[dev,viz,rl]"`.
+
+```bash
+# une expérience (3 graines par défaut, voir configs/training/*.yaml)
+python scripts/train.py configs/training/8_1_level.yaml
+python scripts/train.py configs/training/8_2_heading_altitude.yaml --seeds 0
+
+# transfert sur le 6-DOF d'une politique apprise en 3-DOF
+python scripts/train.py configs/training/8_1_level.yaml --model 6dof --init-from 8_1_level
+
+# étape 8.6 : commande directe des gouvernes (6-DOF, 50 Hz), imitation puis PPO
+python scripts/run_curriculum.py configs/training/curriculum_low_level.yaml --seeds 0
+
+# tout le programme 8.1 -> 8.5, 3-DOF puis 6-DOF (plusieurs heures)
+python scripts/run_curriculum.py configs/training/curriculum.yaml --dry-run
+python scripts/run_curriculum.py configs/training/curriculum.yaml
+
+# suivre l'apprentissage (chaque terme de récompense, métriques de tâche, référence)
+tensorboard --logdir runs
+
+# évaluer : agent vs pilote automatique vs aléatoire, vol Tacview côte à côte, tracés
+python scripts/evaluate_agent.py runs/8_1_level/<date_heure>/seed0/best_model.zip
+```
+
+Tâches disponibles (`task` dans la configuration) : `level` (8.1), `heading_altitude` (8.2),
+`sustained_turn` (8.3), `waypoints` (8.4), `aerobatics` (8.5, `task_kwargs: {maneuvers: [loop]}`
+pour une seule figure).
+
+Bon à savoir : l'agent commande en mode hiérarchique (facteur de charge, taux de roulis, manette),
+exécuté par les commandes de vol électriques ; une action nulle **maintient la trajectoire**.
+Les variantes `*_sac.yaml` (SAC) et `*_imitation.yaml` (imitation du pilote automatique avant le
+RL) servent de comparaison.
+
 ## Conventions (à respecter dans tout le code)
 
 | Sujet | Convention |
@@ -59,7 +94,8 @@ src/jetfighter/
 ├── aircraft/    # paramètres, aéro, propulsion, actionneurs, dynamique 3/6-DOF (phases 2-4)
 ├── missile/     # missile générique à navigation proportionnelle              (phase 9)
 ├── control/     # PID, pilote automatique                                     (phase 6)
-├── envs/        # environnements Gymnasium                                    (phases 7-10)
+├── envs/        # environnements Gymnasium et tâches                          (phases 7-10)
+├── rl/          # entraînement, transfert, imitation, évaluation              (phase 8)
 └── viz/         # tracés, export Tacview                                      (phase 5)
 configs/         # paramètres avion / missile / entraînement (YAML)
 scripts/         # points d'entrée : vol manuel, entraînement, évaluation
@@ -77,3 +113,4 @@ notebooks/       # validations physiques et analyses
 - [x] Phase 5 — Enregistrement/rejeu, courbes, export Tacview, pilotage manuel (`python scripts/demo_flight.py`, `python scripts/fly_manual.py`)
 - [x] Phase 6 — Commandes de vol électriques, pilote automatique, LQR (`python scripts/phase6_autopilot.py`)
 - [x] Phase 7 — Environnement Gymnasium `JetEnv`, tâches, références, essai PPO (`python scripts/phase7_env_check.py --ppo-steps 100000`)
+- [x] Phase 8 — Manœuvres par RL : 8.1 → 8.5 en hiérarchique (3-DOF et 6-DOF), 8.6 en commande directe des gouvernes (90–100 % de réussite, 72–100 % du rendement hiérarchique)

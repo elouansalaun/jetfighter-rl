@@ -1,0 +1,18 @@
+# Variante SAC de 8.2 (plus efficace en échantillons sur les actions continues, plus
+# lente en temps de calcul par pas) — pour comparer les algorithmes.
+name: 8_2_heading_altitude_sac
+description: Cap / altitude / vitesse avec SAC (3-DOF, hiérarchique)
+env:
+  task: heading_altitude
+  model: 3dof
+  action_mode: hierarchical
+algo: sac
+total_timesteps: 300000
+n_envs: 4
+seeds: [0, 1, 2]
+hyperparams:
+  learning_starts: 10000
+  batch_size: 256
+  gamma: 0.99
+eval: {freq: 25000, episodes: 10}
+init_from: null
