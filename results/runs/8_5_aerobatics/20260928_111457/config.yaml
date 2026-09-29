@@ -1,0 +1,32 @@
+name: 8_5_aerobatics
+env:
+  task: aerobatics
+  model: 3dof
+  action_mode: hierarchical
+  task_kwargs:
+    maneuvers:
+    - loop
+    - roll
+    - immelmann
+    - split_s
+algo: ppo
+total_timesteps: 5000000
+n_envs: 8
+seeds:
+- 0
+hyperparams:
+  n_steps: 1024
+  batch_size: 1024
+  learning_rate: 0.0003
+  gamma: 0.995
+  policy_kwargs:
+    net_arch:
+    - 256
+    - 256
+eval:
+  freq: 250000
+  episodes: 20
+init_from: 8_1_level
+normalize_reward: true
+pretrain: null
+description: Looping, tonneau, Immelmann et Split-S (3-DOF, hiérarchique)

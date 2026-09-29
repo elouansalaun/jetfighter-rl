@@ -1,0 +1,109 @@
+{
+  "name": "8_6_level",
+  "directory": "results/runs/8_6_level/20260928_200424",
+  "config": {
+    "name": "8_6_level",
+    "env": {
+      "task": "level",
+      "model": "6dof",
+      "action_mode": "low_level",
+      "agent_dt": 0.02,
+      "control_dt": 0.02
+    },
+    "algo": "ppo",
+    "total_timesteps": 5000000,
+    "n_envs": 8,
+    "seeds": [
+      0
+    ],
+    "hyperparams": {
+      "n_steps": 2048,
+      "batch_size": 2048,
+      "learning_rate": 3e-05,
+      "lr_final": 1e-05,
+      "clip_range": 0.1,
+      "gamma": 0.998,
+      "gae_lambda": 0.99,
+      "policy_kwargs": {
+        "net_arch": [
+          256,
+          256
+        ],
+        "log_std_init": -3.5
+      }
+    },
+    "eval": {
+      "freq": 250000,
+      "episodes": 10
+    },
+    "init_from": null,
+    "normalize_reward": true,
+    "pretrain": {
+      "episodes": 40,
+      "noise": 0.05,
+      "epochs": 30,
+      "critic_warmup": 5
+    },
+    "description": "level en commande directe des gouvernes (6-DOF, 50 Hz), imitation puis PPO"
+  },
+  "baseline": {
+    "mean_return": 16.887630979568723,
+    "std_return": 5.85870466738087,
+    "success_rate": 1.0,
+    "crash_rate": 0.0,
+    "mean_length": 30.0,
+    "metric_recovery_time": 2.784
+  },
+  "seeds": [
+    {
+      "seed": 0,
+      "directory": "results/runs/8_6_level/20260928_200424/seed0",
+      "timesteps": 5013504,
+      "duration_s": 1116.4756067499984,
+      "best": {
+        "mean_return": 16.65626950373799,
+        "std_return": 4.232998079937094,
+        "success_rate": 1.0,
+        "crash_rate": 0.0,
+        "mean_length": 30.0,
+        "metric_recovery_time": 2.254
+      },
+      "final": {
+        "mean_return": 16.619049819429456,
+        "std_return": 4.221372248186746,
+        "success_rate": 1.0,
+        "crash_rate": 0.0,
+        "mean_length": 30.0,
+        "metric_recovery_time": 2.2600000000000002
+      }
+    }
+  ],
+  "best": {
+    "mean_return": {
+      "mean": 16.65626950373799,
+      "std": 0.0
+    },
+    "success_rate": {
+      "mean": 1.0,
+      "std": 0.0
+    },
+    "crash_rate": {
+      "mean": 0.0,
+      "std": 0.0
+    }
+  },
+  "final": {
+    "mean_return": {
+      "mean": 16.619049819429456,
+      "std": 0.0
+    },
+    "success_rate": {
+      "mean": 1.0,
+      "std": 0.0
+    },
+    "crash_rate": {
+      "mean": 0.0,
+      "std": 0.0
+    }
+  }
+}

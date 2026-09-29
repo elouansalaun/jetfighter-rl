@@ -1,0 +1,26 @@
+name: 8_2_heading_altitude_6dof
+env:
+  task: heading_altitude
+  model: 6dof
+  action_mode: hierarchical
+  attitude_features: gravity
+  nz_neutral: compensated
+  action_exponent: 1.0
+algo: ppo
+total_timesteps: 1000000
+n_envs: 8
+seeds:
+- 0
+hyperparams:
+  n_steps: 1024
+  batch_size: 1024
+  learning_rate: 0.0003
+  lr_final: 3.0e-05
+  gamma: 0.99
+eval:
+  freq: 100000
+  episodes: 10
+init_from: 8_2_heading_altitude
+normalize_reward: true
+pretrain: null
+description: Rallier un cap, une altitude et une vitesse tirés au hasard (3-DOF, hiérarchique)

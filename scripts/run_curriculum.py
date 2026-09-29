@@ -16,8 +16,8 @@ import argparse
 import os
 import time
 
-from jetfighter.rl.curriculum import load_curriculum
-from jetfighter.rl.train import train_seeds
+from jetfighter_rl.training.curriculum import load_curriculum
+from jetfighter_rl.training.train import train_seeds
 
 
 def main() -> None:

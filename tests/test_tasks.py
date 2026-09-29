@@ -10,12 +10,12 @@ import pytest
 pytest.importorskip("gymnasium")
 
 from gymnasium.utils.env_checker import check_env
+from jetsim.aircraft.instruments import wind_axes
+from jetsim.core.frames import dcm_from_euler
 
-from jetfighter.aircraft.instruments import wind_axes
-from jetfighter.core.frames import dcm_from_euler
-from jetfighter.envs.baselines import AutopilotPolicy, evaluate
-from jetfighter.envs.jet_env import N_OWN_SHIP, EnvConfig, JetEnv
-from jetfighter.envs.tasks import (
+from jetfighter_rl.envs.baselines import AutopilotPolicy, evaluate
+from jetfighter_rl.envs.jet_env import N_OWN_SHIP, EnvConfig, JetEnv
+from jetfighter_rl.envs.tasks import (
     MANEUVERS,
     TASKS,
     FlightGeometry,
@@ -23,7 +23,7 @@ from jetfighter.envs.tasks import (
     make_task,
     sustained_turn_reference,
 )
-from jetfighter.envs.tasks.aerobatics import segments_for
+from jetfighter_rl.envs.tasks.aerobatics import segments_for
 
 DEG = math.pi / 180
 
@@ -109,9 +109,9 @@ def test_heading_altitude_overshoot_is_measured():
 # 8.3 : virage soutenu
 # --------------------------------------------------------------------------
 def test_sustained_turn_reference_is_the_optimum():
-    from jetfighter.aircraft.dynamics_3dof import PointMassAircraft
-    from jetfighter.aircraft.params import load_aircraft
-    from jetfighter.aircraft.performance import sustained_turn
+    from jetsim.aircraft.dynamics_3dof import PointMassAircraft
+    from jetsim.aircraft.params import load_aircraft
+    from jetsim.aircraft.performance import sustained_turn
 
     ref = sustained_turn_reference(5000.0)
     assert 200 < ref.speed < 300 and 12 * DEG < ref.turn_rate < 18 * DEG

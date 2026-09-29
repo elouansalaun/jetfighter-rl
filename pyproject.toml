@@ -3,40 +3,49 @@ requires = ["hatchling>=1.24"]
 build-backend = "hatchling.build"
 
 [project]
-name = "jetfighter"
+name = "jetfighter-rl"
 version = "0.1.0"
-description = "Simulation simplifiée d'un avion de chasse (type F-16) et apprentissage par renforcement de manœuvres."
+description = "Reinforcement learning of fighter-jet maneuvers (Gymnasium + PPO) on top of the jetsim F-16 flight simulator."
 readme = "README.md"
 requires-python = ">=3.10"
+license = { text = "MIT" }
 authors = [{ name = "Elouan Salaun" }]
+keywords = ["reinforcement-learning", "ppo", "gymnasium", "flight-control", "f-16", "imitation-learning"]
 dependencies = [
+    # simulateur de vol (phases 1 à 6), dépôt séparé
+    "jetsim @ git+https://github.com/elouansalaun/jetfighter-sim.git@v0.1.0",
+    "gymnasium>=0.29",
     "numpy>=1.26",
-    "scipy>=1.11",
     "matplotlib>=3.8",
     "pyyaml>=6.0",
 ]
 
 [project.optional-dependencies]
 rl = [
-    "gymnasium>=0.29",
     "stable-baselines3>=2.3",
     "torch>=2.2",
     "tensorboard>=2.16",
 ]
-viz = [
-    "pygame>=2.5",
-]
 dev = [
-    "gymnasium>=0.29",  # tests des environnements (léger, sans torch)
     "pytest>=8.0",
     "pytest-cov>=5.0",
     "ruff>=0.6",
     "mypy>=1.10",
     "pre-commit>=3.7",
 ]
+notebooks = [
+    "jupyterlab>=4.0",
+]
+
+[project.urls]
+Repository = "https://github.com/elouansalaun/jetfighter-rl"
+Simulator = "https://github.com/elouansalaun/jetfighter-sim"
+
+[tool.hatch.metadata]
+allow-direct-references = true  # dépendance git vers jetsim
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/jetfighter"]
+packages = ["src/jetfighter_rl"]
 
 # --------------------------------------------------------------------------
 # Outils
@@ -60,3 +69,7 @@ ignore = [
 [tool.mypy]
 python_version = "3.10"
 ignore_missing_imports = true
+
+[tool.ruff.lint.isort]
+known-first-party = ["jetfighter_rl"]
+known-third-party = ["jetsim"]

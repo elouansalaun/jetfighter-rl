@@ -1,0 +1,115 @@
+{
+  "name": "8_6_heading_altitude",
+  "directory": "results/runs/8_6_heading_altitude/20260928_202330",
+  "config": {
+    "name": "8_6_heading_altitude",
+    "env": {
+      "task": "heading_altitude",
+      "model": "6dof",
+      "action_mode": "low_level",
+      "agent_dt": 0.02,
+      "control_dt": 0.02
+    },
+    "algo": "ppo",
+    "total_timesteps": 5000000,
+    "n_envs": 8,
+    "seeds": [
+      0
+    ],
+    "hyperparams": {
+      "n_steps": 2048,
+      "batch_size": 2048,
+      "learning_rate": 3e-05,
+      "lr_final": 1e-05,
+      "clip_range": 0.1,
+      "gamma": 0.998,
+      "gae_lambda": 0.99,
+      "policy_kwargs": {
+        "net_arch": [
+          256,
+          256
+        ],
+        "log_std_init": -3.5
+      }
+    },
+    "eval": {
+      "freq": 250000,
+      "episodes": 10
+    },
+    "init_from": null,
+    "normalize_reward": true,
+    "pretrain": {
+      "episodes": 40,
+      "noise": 0.05,
+      "epochs": 30,
+      "critic_warmup": 5
+    },
+    "description": "heading_altitude en commande directe des gouvernes (6-DOF, 50 Hz), imitation puis PPO"
+  },
+  "baseline": {
+    "mean_return": 90.95595463659492,
+    "std_return": 54.99587544271242,
+    "success_rate": 1.0,
+    "crash_rate": 0.0,
+    "mean_length": 90.0,
+    "metric_altitude_overshoot": 0.3837138407197472,
+    "metric_heading_overshoot_deg": 0.0035277410287965216,
+    "metric_settle_time": 28.839999999999996
+  },
+  "seeds": [
+    {
+      "seed": 0,
+      "directory": "results/runs/8_6_heading_altitude/20260928_202330/seed0",
+      "timesteps": 5013504,
+      "duration_s": 1511.1275736249518,
+      "best": {
+        "mean_return": 89.50568446722535,
+        "std_return": 54.159605707793325,
+        "success_rate": 1.0,
+        "crash_rate": 0.0,
+        "mean_length": 90.0,
+        "metric_altitude_overshoot": 11.709507370920937,
+        "metric_heading_overshoot_deg": 0.23184206706074564,
+        "metric_settle_time": 27.648000000000003
+      },
+      "final": {
+        "mean_return": -69.57754843807794,
+        "std_return": 40.45896966177286,
+        "success_rate": 0.0,
+        "crash_rate": 0.0,
+        "mean_length": 90.0,
+        "metric_altitude_overshoot": 20.150642044386494,
+        "metric_heading_overshoot_deg": 0.22712427989044331,
+        "metric_settle_time": 90.0
+      }
+    }
+  ],
+  "best": {
+    "mean_return": {
+      "mean": 89.50568446722535,
+      "std": 0.0
+    },
+    "success_rate": {
+      "mean": 1.0,
+      "std": 0.0
+    },
+    "crash_rate": {
+      "mean": 0.0,
+      "std": 0.0
+    }
+  },
+  "final": {
+    "mean_return": {
+      "mean": -69.57754843807794,
+      "std": 0.0
+    },
+    "success_rate": {
+      "mean": 0.0,
+      "std": 0.0
+    },
+    "crash_rate": {
+      "mean": 0.0,
+      "std": 0.0
+    }
+  }
+}

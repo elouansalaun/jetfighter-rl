@@ -1,0 +1,92 @@
+{
+  "name": "8_1_level",
+  "directory": "results/runs/8_1_level/20260928_090154",
+  "config": {
+    "name": "8_1_level",
+    "env": {
+      "task": "level",
+      "model": "3dof",
+      "action_mode": "hierarchical"
+    },
+    "algo": "ppo",
+    "total_timesteps": 200000,
+    "n_envs": 8,
+    "seeds": [
+      0
+    ],
+    "hyperparams": {
+      "n_steps": 512,
+      "batch_size": 512,
+      "learning_rate": 0.0003,
+      "gamma": 0.99
+    },
+    "eval": {
+      "freq": 20000,
+      "episodes": 10
+    },
+    "init_from": null,
+    "normalize_reward": true,
+    "pretrain": null,
+    "description": "Rattrapage d'assiette inusuelle -> palier ailes horizontales (3-DOF, hiérarchique)"
+  },
+  "baseline": {
+    "mean_return": 17.784928386155016,
+    "std_return": 5.786914046286414,
+    "success_rate": 1.0,
+    "crash_rate": 0.0,
+    "mean_length": 30.0,
+    "metric_recovery_time": 2.7
+  },
+  "seeds": [
+    {
+      "seed": 0,
+      "directory": "results/runs/8_1_level/20260928_090154/seed0",
+      "timesteps": 200704,
+      "duration_s": 99.33910362515599,
+      "best": {
+        "mean_return": 20.844373019623823,
+        "std_return": 3.5550045698519894,
+        "success_rate": 1.0,
+        "crash_rate": 0.0,
+        "mean_length": 30.0,
+        "metric_recovery_time": 1.4
+      },
+      "final": {
+        "mean_return": 20.844373019623823,
+        "std_return": 3.5550045698519894,
+        "success_rate": 1.0,
+        "crash_rate": 0.0,
+        "mean_length": 30.0,
+        "metric_recovery_time": 1.4
+      }
+    }
+  ],
+  "best": {
+    "mean_return": {
+      "mean": 20.844373019623823,
+      "std": 0.0
+    },
+    "success_rate": {
+      "mean": 1.0,
+      "std": 0.0
+    },
+    "crash_rate": {
+      "mean": 0.0,
+      "std": 0.0
+    }
+  },
+  "final": {
+    "mean_return": {
+      "mean": 20.844373019623823,
+      "std": 0.0
+    },
+    "success_rate": {
+      "mean": 1.0,
+      "std": 0.0
+    },
+    "crash_rate": {
+      "mean": 0.0,
+      "std": 0.0
+    }
+  }
+}

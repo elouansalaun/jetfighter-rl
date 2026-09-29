@@ -6,6 +6,7 @@ __pycache__/
 venv/
 build/
 dist/
+uv.lock
 
 # Outils
 .pytest_cache/
@@ -15,12 +16,13 @@ dist/
 htmlcov/
 .ipynb_checkpoints/
 
-# Sorties d'expériences
-runs/
-models/
-outputs/
-*.acmi
+# Sorties d'expériences locales — les résultats de référence sont dans results/
+/runs/
+/models/
+/outputs/
 *.npz
+results/runs/**/final_model.zip
+results/runs/**/tb_*/
 
 # OS / IDE
 .DS_Store

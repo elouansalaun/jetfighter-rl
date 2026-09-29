@@ -1,0 +1,23 @@
+name: 8_1_level_6dof
+env:
+  task: level
+  model: 6dof
+  action_mode: hierarchical
+algo: ppo
+total_timesteps: 200000
+n_envs: 8
+seeds:
+- 0
+hyperparams:
+  n_steps: 512
+  batch_size: 512
+  learning_rate: 0.0003
+  gamma: 0.99
+eval:
+  freq: 20000
+  episodes: 10
+init_from: 8_1_level
+normalize_reward: true
+pretrain: null
+description: Rattrapage d'assiette inusuelle -> palier ailes horizontales (3-DOF,
+  hiérarchique)

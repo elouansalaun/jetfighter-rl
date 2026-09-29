@@ -1,0 +1,22 @@
+name: 8_4_waypoints_6dof
+env:
+  task: waypoints
+  model: 6dof
+  action_mode: hierarchical
+algo: ppo
+total_timesteps: 1500000
+n_envs: 8
+seeds:
+- 0
+hyperparams:
+  n_steps: 1024
+  batch_size: 1024
+  learning_rate: 0.0003
+  gamma: 0.995
+eval:
+  freq: 250000
+  episodes: 10
+init_from: 8_4_waypoints
+normalize_reward: true
+pretrain: null
+description: Enchaînement de points de passage 3D (3-DOF, hiérarchique)

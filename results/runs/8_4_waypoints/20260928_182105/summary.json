@@ -1,0 +1,96 @@
+{
+  "name": "8_4_waypoints",
+  "directory": "results/runs/8_4_waypoints/20260928_182105",
+  "config": {
+    "name": "8_4_waypoints",
+    "env": {
+      "task": "waypoints",
+      "model": "3dof",
+      "action_mode": "hierarchical"
+    },
+    "algo": "ppo",
+    "total_timesteps": 5000000,
+    "n_envs": 8,
+    "seeds": [
+      0
+    ],
+    "hyperparams": {
+      "n_steps": 1024,
+      "batch_size": 1024,
+      "learning_rate": 0.0003,
+      "lr_final": 3e-05,
+      "gamma": 0.995
+    },
+    "eval": {
+      "freq": 250000,
+      "episodes": 10
+    },
+    "init_from": "8_2_heading_altitude",
+    "normalize_reward": true,
+    "pretrain": null,
+    "description": "Enchaînement de points de passage 3D (3-DOF, hiérarchique)"
+  },
+  "baseline": {
+    "mean_return": 39.177951341933834,
+    "std_return": 15.470109047638172,
+    "success_rate": 0.9,
+    "crash_rate": 0.0,
+    "mean_length": 143.37,
+    "metric_waypoints_reached": 3.8,
+    "metric_completion_time": 143.37
+  },
+  "seeds": [
+    {
+      "seed": 0,
+      "directory": "results/runs/8_4_waypoints/20260928_182105/seed0",
+      "timesteps": 5005312,
+      "duration_s": 1141.8452800828964,
+      "best": {
+        "mean_return": 47.789210978538286,
+        "std_return": 2.122125470554668,
+        "success_rate": 1.0,
+        "crash_rate": 0.0,
+        "mean_length": 86.71,
+        "metric_waypoints_reached": 4.0,
+        "metric_completion_time": 86.71
+      },
+      "final": {
+        "mean_return": 47.42805042592878,
+        "std_return": 2.110897602823835,
+        "success_rate": 1.0,
+        "crash_rate": 0.0,
+        "mean_length": 90.28,
+        "metric_waypoints_reached": 4.0,
+        "metric_completion_time": 90.28
+      }
+    }
+  ],
+  "best": {
+    "mean_return": {
+      "mean": 47.789210978538286,
+      "std": 0.0
+    },
+    "success_rate": {
+      "mean": 1.0,
+      "std": 0.0
+    },
+    "crash_rate": {
+      "mean": 0.0,
+      "std": 0.0
+    }
+  },
+  "final": {
+    "mean_return": {
+      "mean": 47.42805042592878,
+      "std": 0.0
+    },
+    "success_rate": {
+      "mean": 1.0,
+      "std": 0.0
+    },
+    "crash_rate": {
+      "mean": 0.0,
+      "std": 0.0
+    }
+  }
+}

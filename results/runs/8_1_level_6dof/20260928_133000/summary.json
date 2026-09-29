@@ -1,0 +1,92 @@
+{
+  "name": "8_1_level_6dof",
+  "directory": "results/runs/8_1_level_6dof/20260928_133000",
+  "config": {
+    "name": "8_1_level_6dof",
+    "env": {
+      "task": "level",
+      "model": "6dof",
+      "action_mode": "hierarchical"
+    },
+    "algo": "ppo",
+    "total_timesteps": 1000000,
+    "n_envs": 8,
+    "seeds": [
+      0
+    ],
+    "hyperparams": {
+      "n_steps": 512,
+      "batch_size": 512,
+      "learning_rate": 0.0003,
+      "gamma": 0.99
+    },
+    "eval": {
+      "freq": 20000,
+      "episodes": 10
+    },
+    "init_from": "8_1_level",
+    "normalize_reward": true,
+    "pretrain": null,
+    "description": "Rattrapage d'assiette inusuelle -> palier ailes horizontales (3-DOF, hiérarchique)"
+  },
+  "baseline": {
+    "mean_return": 17.252219406781645,
+    "std_return": 5.754216552352218,
+    "success_rate": 1.0,
+    "crash_rate": 0.0,
+    "mean_length": 30.0,
+    "metric_recovery_time": 2.7899999999999996
+  },
+  "seeds": [
+    {
+      "seed": 0,
+      "directory": "results/runs/8_1_level_6dof/20260928_133000/seed0",
+      "timesteps": 1003520,
+      "duration_s": 894.5996910829563,
+      "best": {
+        "mean_return": 20.03205237768699,
+        "std_return": 3.106666923721663,
+        "success_rate": 1.0,
+        "crash_rate": 0.0,
+        "mean_length": 30.0,
+        "metric_recovery_time": 1.73
+      },
+      "final": {
+        "mean_return": 18.350309279876605,
+        "std_return": 2.6926314934891837,
+        "success_rate": 1.0,
+        "crash_rate": 0.0,
+        "mean_length": 30.0,
+        "metric_recovery_time": 1.75
+      }
+    }
+  ],
+  "best": {
+    "mean_return": {
+      "mean": 20.03205237768699,
+      "std": 0.0
+    },
+    "success_rate": {
+      "mean": 1.0,
+      "std": 0.0
+    },
+    "crash_rate": {
+      "mean": 0.0,
+      "std": 0.0
+    }
+  },
+  "final": {
+    "mean_return": {
+      "mean": 18.350309279876605,
+      "std": 0.0
+    },
+    "success_rate": {
+      "mean": 1.0,
+      "std": 0.0
+    },
+    "crash_rate": {
+      "mean": 0.0,
+      "std": 0.0
+    }
+  }
+}

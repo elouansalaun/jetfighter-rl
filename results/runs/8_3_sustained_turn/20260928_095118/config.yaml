@@ -1,0 +1,22 @@
+name: 8_3_sustained_turn
+env:
+  task: sustained_turn
+  model: 3dof
+  action_mode: hierarchical
+algo: ppo
+total_timesteps: 3000000
+n_envs: 8
+seeds:
+- 0
+hyperparams:
+  n_steps: 1024
+  batch_size: 1024
+  learning_rate: 0.0003
+  gamma: 0.99
+eval:
+  freq: 100000
+  episodes: 10
+init_from: 8_1_level
+normalize_reward: true
+pretrain: null
+description: Virage soutenu optimal (3-DOF, hiérarchique)

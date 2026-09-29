@@ -1,0 +1,35 @@
+name: 8_5_aerobatics_6dof
+env:
+  task: aerobatics
+  model: 6dof
+  action_mode: hierarchical
+  task_kwargs:
+    maneuvers:
+    - loop
+    - roll
+    - immelmann
+    - split_s
+  attitude_features: gravity
+  nz_neutral: compensated
+  action_exponent: 1.0
+algo: ppo
+total_timesteps: 1500000
+n_envs: 8
+seeds:
+- 0
+hyperparams:
+  n_steps: 1024
+  batch_size: 1024
+  learning_rate: 0.0003
+  gamma: 0.995
+  policy_kwargs:
+    net_arch:
+    - 256
+    - 256
+eval:
+  freq: 250000
+  episodes: 20
+init_from: 8_5_aerobatics
+normalize_reward: true
+pretrain: null
+description: Looping, tonneau, Immelmann et Split-S (3-DOF, hiérarchique)

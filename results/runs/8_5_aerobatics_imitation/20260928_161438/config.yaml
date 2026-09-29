@@ -1,0 +1,41 @@
+name: 8_5_aerobatics_imitation
+env:
+  task: aerobatics
+  model: 3dof
+  action_mode: hierarchical
+  task_kwargs:
+    maneuvers:
+    - loop
+    - roll
+    - immelmann
+    - split_s
+  attitude_features: gravity
+  nz_neutral: compensated
+  action_exponent: 1.0
+algo: ppo
+total_timesteps: 3000000
+n_envs: 8
+seeds:
+- 0
+hyperparams:
+  n_steps: 1024
+  batch_size: 1024
+  learning_rate: 5.0e-05
+  clip_range: 0.1
+  gamma: 0.995
+  policy_kwargs:
+    net_arch:
+    - 256
+    - 256
+    log_std_init: -2.0
+eval:
+  freq: 100000
+  episodes: 20
+init_from: null
+normalize_reward: true
+pretrain:
+  episodes: 80
+  noise: 0.1
+  epochs: 30
+  critic_warmup: 5
+description: Voltige, imitation du pilote scripté puis PPO (3-DOF, hiérarchique)

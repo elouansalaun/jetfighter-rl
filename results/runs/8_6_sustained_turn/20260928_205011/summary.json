@@ -1,0 +1,118 @@
+{
+  "name": "8_6_sustained_turn",
+  "directory": "results/runs/8_6_sustained_turn/20260928_205011",
+  "config": {
+    "name": "8_6_sustained_turn",
+    "env": {
+      "task": "sustained_turn",
+      "model": "6dof",
+      "action_mode": "low_level",
+      "agent_dt": 0.02,
+      "control_dt": 0.02
+    },
+    "algo": "ppo",
+    "total_timesteps": 5000000,
+    "n_envs": 8,
+    "seeds": [
+      0
+    ],
+    "hyperparams": {
+      "n_steps": 2048,
+      "batch_size": 2048,
+      "learning_rate": 3e-05,
+      "lr_final": 1e-05,
+      "clip_range": 0.1,
+      "gamma": 0.998,
+      "gae_lambda": 0.99,
+      "policy_kwargs": {
+        "net_arch": [
+          256,
+          256
+        ],
+        "log_std_init": -3.5
+      }
+    },
+    "eval": {
+      "freq": 250000,
+      "episodes": 10
+    },
+    "init_from": null,
+    "normalize_reward": true,
+    "pretrain": {
+      "episodes": 40,
+      "noise": 0.05,
+      "epochs": 30,
+      "critic_warmup": 5
+    },
+    "description": "sustained_turn en commande directe des gouvernes (6-DOF, 50 Hz), imitation puis PPO"
+  },
+  "baseline": {
+    "mean_return": 165.5724124065505,
+    "std_return": 21.229859419025555,
+    "success_rate": 1.0,
+    "crash_rate": 0.0,
+    "mean_length": 60.0,
+    "metric_turn_rate_deg_s": 12.119166292883177,
+    "metric_turn_rate_ratio": 0.8991857790865317,
+    "metric_max_altitude_error": 16.90058720392567,
+    "metric_energy_deficit": 128.23699471872615
+  },
+  "seeds": [
+    {
+      "seed": 0,
+      "directory": "results/runs/8_6_sustained_turn/20260928_205011/seed0",
+      "timesteps": 5013504,
+      "duration_s": 1324.602615041891,
+      "best": {
+        "mean_return": 225.1256726472909,
+        "std_return": 27.552759138273203,
+        "success_rate": 1.0,
+        "crash_rate": 0.0,
+        "mean_length": 60.0,
+        "metric_turn_rate_deg_s": 12.183477248131723,
+        "metric_turn_rate_ratio": 0.9054447187087031,
+        "metric_max_altitude_error": 63.23240860859678,
+        "metric_energy_deficit": -21.16427584516341
+      },
+      "final": {
+        "mean_return": 224.68145461389304,
+        "std_return": 28.357616097261477,
+        "success_rate": 1.0,
+        "crash_rate": 0.0,
+        "mean_length": 60.0,
+        "metric_turn_rate_deg_s": 12.175703546230308,
+        "metric_turn_rate_ratio": 0.9048452530699341,
+        "metric_max_altitude_error": 65.44056859029301,
+        "metric_energy_deficit": -26.632819081895104
+      }
+    }
+  ],
+  "best": {
+    "mean_return": {
+      "mean": 225.1256726472909,
+      "std": 0.0
+    },
+    "success_rate": {
+      "mean": 1.0,
+      "std": 0.0
+    },
+    "crash_rate": {
+      "mean": 0.0,
+      "std": 0.0
+    }
+  },
+  "final": {
+    "mean_return": {
+      "mean": 224.68145461389304,
+      "std": 0.0
+    },
+    "success_rate": {
+      "mean": 1.0,
+      "std": 0.0
+    },
+    "crash_rate": {
+      "mean": 0.0,
+      "std": 0.0
+    }
+  }
+}

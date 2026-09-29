@@ -13,9 +13,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
-      - name: Installer
-        run: uv venv --python ${{ matrix.python-version }} && uv pip install -e ".[dev]"
+      - name: Installer (jetsim depuis GitHub, torch CPU)
+        run: |
+          uv venv --python ${{ matrix.python-version }}
+          uv pip install torch --index-url https://download.pytorch.org/whl/cpu
+          uv pip install -e ".[dev,rl]"
       - name: Lint
-        run: uv run ruff check . && uv run ruff format --check .
+        run: uv run --no-sync ruff check . && uv run --no-sync ruff format --check .
       - name: Tests
-        run: uv run pytest
+        run: uv run --no-sync pytest

@@ -1,0 +1,101 @@
+{
+  "name": "8_3_sustained_turn_6dof",
+  "directory": "results/runs/8_3_sustained_turn_6dof/20260928_101334",
+  "config": {
+    "name": "8_3_sustained_turn_6dof",
+    "env": {
+      "task": "sustained_turn",
+      "model": "6dof",
+      "action_mode": "hierarchical"
+    },
+    "algo": "ppo",
+    "total_timesteps": 1000000,
+    "n_envs": 8,
+    "seeds": [
+      0
+    ],
+    "hyperparams": {
+      "n_steps": 1024,
+      "batch_size": 1024,
+      "learning_rate": 0.0003,
+      "gamma": 0.99
+    },
+    "eval": {
+      "freq": 100000,
+      "episodes": 10
+    },
+    "init_from": "8_3_sustained_turn",
+    "normalize_reward": true,
+    "pretrain": null,
+    "description": "Virage soutenu optimal (3-DOF, hiérarchique)"
+  },
+  "baseline": {
+    "mean_return": 165.61936317296778,
+    "std_return": 20.835797623074384,
+    "success_rate": 1.0,
+    "crash_rate": 0.0,
+    "mean_length": 60.0,
+    "metric_turn_rate_deg_s": 12.109699644203843,
+    "metric_turn_rate_ratio": 0.8985990288581291,
+    "metric_max_altitude_error": 16.635652372432425,
+    "metric_energy_deficit": 125.84987465517679
+  },
+  "seeds": [
+    {
+      "seed": 0,
+      "directory": "results/runs/8_3_sustained_turn_6dof/20260928_101334/seed0",
+      "timesteps": 1007616,
+      "duration_s": 794.0050369161181,
+      "best": {
+        "mean_return": 265.7393906589898,
+        "std_return": 7.446522920732212,
+        "success_rate": 1.0,
+        "crash_rate": 0.0,
+        "mean_length": 60.0,
+        "metric_turn_rate_deg_s": 12.230328531625828,
+        "metric_turn_rate_ratio": 0.9086060367459753,
+        "metric_max_altitude_error": 2.139837495589063,
+        "metric_energy_deficit": 38.65057418307306
+      },
+      "final": {
+        "mean_return": 264.6874513114231,
+        "std_return": 8.401839161532116,
+        "success_rate": 1.0,
+        "crash_rate": 0.0,
+        "mean_length": 60.0,
+        "metric_turn_rate_deg_s": 12.226616456747873,
+        "metric_turn_rate_ratio": 0.9083264271872867,
+        "metric_max_altitude_error": 3.24462183797541,
+        "metric_energy_deficit": 25.29938922652882
+      }
+    }
+  ],
+  "best": {
+    "mean_return": {
+      "mean": 265.7393906589898,
+      "std": 0.0
+    },
+    "success_rate": {
+      "mean": 1.0,
+      "std": 0.0
+    },
+    "crash_rate": {
+      "mean": 0.0,
+      "std": 0.0
+    }
+  },
+  "final": {
+    "mean_return": {
+      "mean": 264.6874513114231,
+      "std": 0.0
+    },
+    "success_rate": {
+      "mean": 1.0,
+      "std": 0.0
+    },
+    "crash_rate": {
+      "mean": 0.0,
+      "std": 0.0
+    }
+  }
+}

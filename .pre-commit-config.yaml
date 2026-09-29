@@ -12,3 +12,4 @@ repos:
       - id: trailing-whitespace
       - id: check-yaml
       - id: check-added-large-files
+        args: [--maxkb=2500]  # modèles entraînés et vols Tacview de results/

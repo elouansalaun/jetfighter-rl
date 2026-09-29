@@ -1,0 +1,118 @@
+{
+  "name": "8_5_aerobatics_6dof",
+  "directory": "results/runs/8_5_aerobatics_6dof/20260928_113837",
+  "config": {
+    "name": "8_5_aerobatics_6dof",
+    "env": {
+      "task": "aerobatics",
+      "model": "6dof",
+      "action_mode": "hierarchical",
+      "task_kwargs": {
+        "maneuvers": [
+          "loop",
+          "roll",
+          "immelmann",
+          "split_s"
+        ]
+      }
+    },
+    "algo": "ppo",
+    "total_timesteps": 1500000,
+    "n_envs": 8,
+    "seeds": [
+      0
+    ],
+    "hyperparams": {
+      "n_steps": 1024,
+      "batch_size": 1024,
+      "learning_rate": 0.0003,
+      "gamma": 0.995,
+      "policy_kwargs": {
+        "net_arch": [
+          256,
+          256
+        ]
+      }
+    },
+    "eval": {
+      "freq": 250000,
+      "episodes": 20
+    },
+    "init_from": "8_5_aerobatics",
+    "normalize_reward": true,
+    "pretrain": null,
+    "description": "Looping, tonneau, Immelmann et Split-S (3-DOF, hiérarchique)"
+  },
+  "baseline": {
+    "mean_return": 56.179692481729134,
+    "std_return": 2.0774604765505362,
+    "success_rate": 1.0,
+    "crash_rate": 0.0,
+    "mean_length": 13.404999999999998,
+    "metric_progress": 1.0,
+    "metric_completion_time": 13.404999999999998,
+    "metric_exit_heading_error_deg": 1.824136377497498,
+    "metric_exit_lateral_offset": 21.88144592370465,
+    "metric_exit_altitude_change": 364.9180124109414
+  },
+  "seeds": [
+    {
+      "seed": 0,
+      "directory": "results/runs/8_5_aerobatics_6dof/20260928_113837/seed0",
+      "timesteps": 1507328,
+      "duration_s": 1150.8402552499902,
+      "best": {
+        "mean_return": 15.808411554930107,
+        "std_return": 51.39263780784466,
+        "success_rate": 0.5,
+        "crash_rate": 0.05,
+        "mean_length": 25.674,
+        "metric_progress": 0.7423126827302483,
+        "metric_completion_time": 26.065000000000005,
+        "metric_exit_heading_error_deg": 91.84079808307277,
+        "metric_exit_lateral_offset": 18.876835397672103,
+        "metric_exit_altitude_change": 236.79433908548708
+      },
+      "final": {
+        "mean_return": 23.79957140330442,
+        "std_return": 29.400360772923342,
+        "success_rate": 0.4,
+        "crash_rate": 0.0,
+        "mean_length": 28.814999999999998,
+        "metric_progress": 0.6770145498737462,
+        "metric_completion_time": 28.814999999999998,
+        "metric_exit_heading_error_deg": 109.74440519917944,
+        "metric_exit_lateral_offset": 8.903398191177136,
+        "metric_exit_altitude_change": 69.92528522592052
+      }
+    }
+  ],
+  "best": {
+    "mean_return": {
+      "mean": 15.808411554930107,
+      "std": 0.0
+    },
+    "success_rate": {
+      "mean": 0.5,
+      "std": 0.0
+    },
+    "crash_rate": {
+      "mean": 0.05,
+      "std": 0.0
+    }
+  },
+  "final": {
+    "mean_return": {
+      "mean": 23.79957140330442,
+      "std": 0.0
+    },
+    "success_rate": {
+      "mean": 0.4,
+      "std": 0.0
+    },
+    "crash_rate": {
+      "mean": 0.0,
+      "std": 0.0
+    }
+  }
+}

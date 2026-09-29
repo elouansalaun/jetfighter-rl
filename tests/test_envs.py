@@ -8,18 +8,18 @@ import pytest
 gym = pytest.importorskip("gymnasium")
 
 from gymnasium.utils.env_checker import check_env  # noqa: E402
+from jetsim.control.fbw import HighLevelCommand  # noqa: E402
+from jetsim.viz.recorder import replay  # noqa: E402
 
-import jetfighter.envs  # noqa: E402,F401  (enregistre les identifiants)
-from jetfighter.control.fbw import HighLevelCommand  # noqa: E402
-from jetfighter.envs.baselines import AutopilotPolicy, RandomPolicy, evaluate  # noqa: E402
-from jetfighter.envs.jet_env import (  # noqa: E402
+import jetfighter_rl.envs  # noqa: E402,F401  (enregistre les identifiants)
+from jetfighter_rl.envs.baselines import AutopilotPolicy, RandomPolicy, evaluate  # noqa: E402
+from jetfighter_rl.envs.jet_env import (  # noqa: E402
     EnvConfig,
     JetEnv,
     action_to_command,
     command_to_action,
 )
-from jetfighter.envs.tasks import InitialCondition, make_task  # noqa: E402
-from jetfighter.viz.recorder import replay  # noqa: E402
+from jetfighter_rl.envs.tasks import InitialCondition, make_task  # noqa: E402
 
 DEG = math.pi / 180
 COMBOS = [(t, m, a) for t in ("level", "heading_altitude") for m in ("3dof", "6dof")
@@ -224,8 +224,8 @@ def test_attitude_features_are_continuous_through_the_vertical():
 
 def test_old_runs_keep_euler_attitude_features(tmp_path):
     pytest.importorskip("stable_baselines3")
-    from jetfighter.rl.config import TrainConfig
-    from jetfighter.rl.train import run_config_of
+    from jetfighter_rl.training.config import TrainConfig
+    from jetfighter_rl.training.train import run_config_of
 
     TrainConfig(name="old", env={"task": "level"}).save(tmp_path / "config.yaml")
     assert run_config_of(tmp_path / "seed0" / "best_model.zip").env["attitude_features"] == "euler"

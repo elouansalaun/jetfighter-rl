@@ -24,10 +24,10 @@ from pathlib import Path
 
 import numpy as np
 from gymnasium.utils.env_checker import check_env
+from jetsim.viz.tacview import export_recording
 
-from jetfighter.envs.baselines import AutopilotPolicy, RandomPolicy, evaluate
-from jetfighter.envs.jet_env import EnvConfig, JetEnv
-from jetfighter.viz.tacview import export_recording
+from jetfighter_rl.envs.baselines import AutopilotPolicy, RandomPolicy, evaluate
+from jetfighter_rl.envs.jet_env import EnvConfig, JetEnv
 
 
 def throughput(cfg: EnvConfig, n_envs: int, steps: int) -> float:

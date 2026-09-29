@@ -1,0 +1,112 @@
+{
+  "name": "8_6_waypoints",
+  "directory": "results/runs/8_6_waypoints/20260928_211316",
+  "config": {
+    "name": "8_6_waypoints",
+    "env": {
+      "task": "waypoints",
+      "model": "6dof",
+      "action_mode": "low_level",
+      "agent_dt": 0.02,
+      "control_dt": 0.02
+    },
+    "algo": "ppo",
+    "total_timesteps": 5000000,
+    "n_envs": 8,
+    "seeds": [
+      0
+    ],
+    "hyperparams": {
+      "n_steps": 2048,
+      "batch_size": 2048,
+      "learning_rate": 3e-05,
+      "lr_final": 1e-05,
+      "clip_range": 0.1,
+      "gamma": 0.998,
+      "gae_lambda": 0.99,
+      "policy_kwargs": {
+        "net_arch": [
+          256,
+          256
+        ],
+        "log_std_init": -3.5
+      }
+    },
+    "eval": {
+      "freq": 250000,
+      "episodes": 10
+    },
+    "init_from": null,
+    "normalize_reward": true,
+    "pretrain": {
+      "episodes": 10,
+      "noise": 0.05,
+      "epochs": 30,
+      "critic_warmup": 5
+    },
+    "description": "waypoints en commande directe des gouvernes (6-DOF, 50 Hz), imitation puis PPO"
+  },
+  "baseline": {
+    "mean_return": 38.9402698954189,
+    "std_return": 15.416833563670789,
+    "success_rate": 0.9,
+    "crash_rate": 0.0,
+    "mean_length": 143.902,
+    "metric_waypoints_reached": 3.8,
+    "metric_completion_time": 143.902
+  },
+  "seeds": [
+    {
+      "seed": 0,
+      "directory": "results/runs/8_6_waypoints/20260928_211316/seed0",
+      "timesteps": 5013504,
+      "duration_s": 2356.1623879580293,
+      "best": {
+        "mean_return": 38.34741107777016,
+        "std_return": 14.714016282146615,
+        "success_rate": 0.9,
+        "crash_rate": 0.0,
+        "mean_length": 143.238,
+        "metric_waypoints_reached": 3.8,
+        "metric_completion_time": 143.238
+      },
+      "final": {
+        "mean_return": 13.573171793497853,
+        "std_return": 31.184957316770006,
+        "success_rate": 0.5,
+        "crash_rate": 0.0,
+        "mean_length": 212.166,
+        "metric_waypoints_reached": 2.4,
+        "metric_completion_time": 212.166
+      }
+    }
+  ],
+  "best": {
+    "mean_return": {
+      "mean": 38.34741107777016,
+      "std": 0.0
+    },
+    "success_rate": {
+      "mean": 0.9,
+      "std": 0.0
+    },
+    "crash_rate": {
+      "mean": 0.0,
+      "std": 0.0
+    }
+  },
+  "final": {
+    "mean_return": {
+      "mean": 13.573171793497853,
+      "std": 0.0
+    },
+    "success_rate": {
+      "mean": 0.5,
+      "std": 0.0
+    },
+    "crash_rate": {
+      "mean": 0.0,
+      "std": 0.0
+    }
+  }
+}

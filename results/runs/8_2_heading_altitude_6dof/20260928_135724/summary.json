@@ -1,0 +1,98 @@
+{
+  "name": "8_2_heading_altitude_6dof",
+  "directory": "results/runs/8_2_heading_altitude_6dof/20260928_135724",
+  "config": {
+    "name": "8_2_heading_altitude_6dof",
+    "env": {
+      "task": "heading_altitude",
+      "model": "6dof",
+      "action_mode": "hierarchical"
+    },
+    "algo": "ppo",
+    "total_timesteps": 1000000,
+    "n_envs": 8,
+    "seeds": [
+      0
+    ],
+    "hyperparams": {
+      "n_steps": 1024,
+      "batch_size": 1024,
+      "learning_rate": 0.0003,
+      "gamma": 0.99
+    },
+    "eval": {
+      "freq": 100000,
+      "episodes": 10
+    },
+    "init_from": "8_2_heading_altitude",
+    "normalize_reward": true,
+    "pretrain": null,
+    "description": "Rallier un cap, une altitude et une vitesse tirés au hasard (3-DOF, hiérarchique)"
+  },
+  "baseline": {
+    "mean_return": 91.29651000454685,
+    "std_return": 54.81217073086991,
+    "success_rate": 1.0,
+    "crash_rate": 0.0,
+    "mean_length": 90.0,
+    "metric_altitude_overshoot": 0.3941102646139825,
+    "metric_heading_overshoot_deg": 0.0017033658479927148,
+    "metric_settle_time": 28.78
+  },
+  "seeds": [
+    {
+      "seed": 0,
+      "directory": "results/runs/8_2_heading_altitude_6dof/20260928_135724/seed0",
+      "timesteps": 1007616,
+      "duration_s": 887.9422945000697,
+      "best": {
+        "mean_return": 60.27834948223309,
+        "std_return": 50.08324040567951,
+        "success_rate": 0.5,
+        "crash_rate": 0.0,
+        "mean_length": 90.0,
+        "metric_altitude_overshoot": 83.79353931806045,
+        "metric_heading_overshoot_deg": 1.833061271634545,
+        "metric_settle_time": 57.3
+      },
+      "final": {
+        "mean_return": -3.281805249787337,
+        "std_return": 29.850462238806408,
+        "success_rate": 0.0,
+        "crash_rate": 0.0,
+        "mean_length": 90.0,
+        "metric_altitude_overshoot": 48.811924848008175,
+        "metric_heading_overshoot_deg": 1.6186694507810102,
+        "metric_settle_time": 90.0
+      }
+    }
+  ],
+  "best": {
+    "mean_return": {
+      "mean": 60.27834948223309,
+      "std": 0.0
+    },
+    "success_rate": {
+      "mean": 0.5,
+      "std": 0.0
+    },
+    "crash_rate": {
+      "mean": 0.0,
+      "std": 0.0
+    }
+  },
+  "final": {
+    "mean_return": {
+      "mean": -3.281805249787337,
+      "std": 0.0
+    },
+    "success_rate": {
+      "mean": 0.0,
+      "std": 0.0
+    },
+    "crash_rate": {
+      "mean": 0.0,
+      "std": 0.0
+    }
+  }
+}

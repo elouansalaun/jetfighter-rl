@@ -1,0 +1,125 @@
+{
+  "name": "8_5_aerobatics_imitation",
+  "directory": "results/runs/8_5_aerobatics_imitation/20260928_161438",
+  "config": {
+    "name": "8_5_aerobatics_imitation",
+    "env": {
+      "task": "aerobatics",
+      "model": "3dof",
+      "action_mode": "hierarchical",
+      "task_kwargs": {
+        "maneuvers": [
+          "loop",
+          "roll",
+          "immelmann",
+          "split_s"
+        ]
+      }
+    },
+    "algo": "ppo",
+    "total_timesteps": 3000000,
+    "n_envs": 8,
+    "seeds": [
+      0
+    ],
+    "hyperparams": {
+      "n_steps": 1024,
+      "batch_size": 1024,
+      "learning_rate": 5e-05,
+      "clip_range": 0.1,
+      "gamma": 0.995,
+      "policy_kwargs": {
+        "net_arch": [
+          256,
+          256
+        ],
+        "log_std_init": -2.0
+      }
+    },
+    "eval": {
+      "freq": 100000,
+      "episodes": 20
+    },
+    "init_from": null,
+    "normalize_reward": true,
+    "pretrain": {
+      "episodes": 80,
+      "noise": 0.1,
+      "epochs": 30,
+      "critic_warmup": 5
+    },
+    "description": "Voltige, imitation du pilote scripté puis PPO (3-DOF, hiérarchique)"
+  },
+  "baseline": {
+    "mean_return": 57.89273337824195,
+    "std_return": 1.1765359469283228,
+    "success_rate": 1.0,
+    "crash_rate": 0.0,
+    "mean_length": 13.084999999999999,
+    "metric_progress": 1.0,
+    "metric_completion_time": 13.084999999999999,
+    "metric_exit_heading_error_deg": 0.950012384985665,
+    "metric_exit_lateral_offset": 11.73254794285767,
+    "metric_exit_altitude_change": 420.8104744324488
+  },
+  "seeds": [
+    {
+      "seed": 0,
+      "directory": "results/runs/8_5_aerobatics_imitation/20260928_161438/seed0",
+      "timesteps": 3006464,
+      "duration_s": 744.2034351248294,
+      "best": {
+        "mean_return": 58.21814149780615,
+        "std_return": 0.9507172577171159,
+        "success_rate": 1.0,
+        "crash_rate": 0.0,
+        "mean_length": 9.3,
+        "metric_progress": 1.0,
+        "metric_completion_time": 9.3,
+        "metric_exit_heading_error_deg": 1.7996939557643963,
+        "metric_exit_lateral_offset": 7.902885859185076,
+        "metric_exit_altitude_change": 138.88254291506587
+      },
+      "final": {
+        "mean_return": 58.19772084044312,
+        "std_return": 0.9459035494564013,
+        "success_rate": 1.0,
+        "crash_rate": 0.0,
+        "mean_length": 9.264999999999999,
+        "metric_progress": 1.0,
+        "metric_completion_time": 9.264999999999999,
+        "metric_exit_heading_error_deg": 1.559478794605742,
+        "metric_exit_lateral_offset": 6.618559293536826,
+        "metric_exit_altitude_change": 139.65350163923284
+      }
+    }
+  ],
+  "best": {
+    "mean_return": {
+      "mean": 58.21814149780615,
+      "std": 0.0
+    },
+    "success_rate": {
+      "mean": 1.0,
+      "std": 0.0
+    },
+    "crash_rate": {
+      "mean": 0.0,
+      "std": 0.0
+    }
+  },
+  "final": {
+    "mean_return": {
+      "mean": 58.19772084044312,
+      "std": 0.0
+    },
+    "success_rate": {
+      "mean": 1.0,
+      "std": 0.0
+    },
+    "crash_rate": {
+      "mean": 0.0,
+      "std": 0.0
+    }
+  }
+}

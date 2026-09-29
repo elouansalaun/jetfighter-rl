@@ -16,8 +16,8 @@ from pathlib import Path
 
 import yaml
 
-from jetfighter.rl.callbacks import EVAL_SEED
-from jetfighter.rl.evaluate import (
+from jetfighter_rl.training.callbacks import EVAL_SEED
+from jetfighter_rl.training.evaluate import (
     compare,
     env_config_for,
     export_side_by_side,

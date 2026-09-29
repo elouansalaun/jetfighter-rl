@@ -7,7 +7,7 @@ Usage :
         --init-from 8_2_heading_altitude          # transfert 3-DOF -> 6-DOF
     tensorboard --logdir runs                     # courbes (termes de récompense détaillés)
 
-Résultats dans ``runs/<nom>/<date_heure>/`` (cf. ``jetfighter.rl.train``). Évaluer ensuite
+Résultats dans ``runs/<nom>/<date_heure>/`` (cf. ``jetfighter_rl.training.train``). Évaluer ensuite
 avec ``python scripts/evaluate_agent.py runs/<nom>/<date_heure>/seed0/best_model.zip``.
 """
 
@@ -17,8 +17,8 @@ import argparse
 import dataclasses
 import os
 
-from jetfighter.rl.config import TrainConfig
-from jetfighter.rl.train import train_seeds
+from jetfighter_rl.training.config import TrainConfig
+from jetfighter_rl.training.train import train_seeds
 
 
 def main() -> None:

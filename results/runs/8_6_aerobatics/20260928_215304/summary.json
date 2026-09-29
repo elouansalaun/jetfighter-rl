@@ -1,0 +1,129 @@
+{
+  "name": "8_6_aerobatics",
+  "directory": "results/runs/8_6_aerobatics/20260928_215304",
+  "config": {
+    "name": "8_6_aerobatics",
+    "env": {
+      "task": "aerobatics",
+      "model": "6dof",
+      "action_mode": "low_level",
+      "agent_dt": 0.02,
+      "control_dt": 0.02,
+      "task_kwargs": {
+        "maneuvers": [
+          "loop",
+          "roll",
+          "immelmann",
+          "split_s"
+        ]
+      }
+    },
+    "algo": "ppo",
+    "total_timesteps": 5000000,
+    "n_envs": 8,
+    "seeds": [
+      0
+    ],
+    "hyperparams": {
+      "n_steps": 2048,
+      "batch_size": 2048,
+      "learning_rate": 3e-05,
+      "lr_final": 1e-05,
+      "clip_range": 0.1,
+      "gamma": 0.998,
+      "gae_lambda": 0.99,
+      "policy_kwargs": {
+        "net_arch": [
+          256,
+          256
+        ],
+        "log_std_init": -3.5
+      }
+    },
+    "eval": {
+      "freq": 250000,
+      "episodes": 10
+    },
+    "init_from": null,
+    "normalize_reward": true,
+    "pretrain": {
+      "episodes": 40,
+      "noise": 0.05,
+      "epochs": 30,
+      "critic_warmup": 5
+    },
+    "description": "aerobatics en commande directe des gouvernes (6-DOF, 50 Hz), imitation puis PPO"
+  },
+  "baseline": {
+    "mean_return": 57.37173550658457,
+    "std_return": 0.7082712265379753,
+    "success_rate": 1.0,
+    "crash_rate": 0.0,
+    "mean_length": 9.792,
+    "metric_progress": 1.0,
+    "metric_completion_time": 9.792,
+    "metric_exit_heading_error_deg": 1.5733057643990684,
+    "metric_exit_lateral_offset": 19.547994364821008,
+    "metric_exit_altitude_change": -136.58578738761213
+  },
+  "seeds": [
+    {
+      "seed": 0,
+      "directory": "results/runs/8_6_aerobatics/20260928_215304/seed0",
+      "timesteps": 5013504,
+      "duration_s": 1161.5342693331186,
+      "best": {
+        "mean_return": 57.40893043563998,
+        "std_return": 0.9609063734595312,
+        "success_rate": 1.0,
+        "crash_rate": 0.0,
+        "mean_length": 9.484,
+        "metric_progress": 1.0,
+        "metric_completion_time": 9.484,
+        "metric_exit_heading_error_deg": 1.960873089322066,
+        "metric_exit_lateral_offset": 21.193484290686907,
+        "metric_exit_altitude_change": -229.93025095720753
+      },
+      "final": {
+        "mean_return": 57.23194877466451,
+        "std_return": 1.4297023925932335,
+        "success_rate": 1.0,
+        "crash_rate": 0.0,
+        "mean_length": 9.59,
+        "metric_progress": 1.0,
+        "metric_completion_time": 9.59,
+        "metric_exit_heading_error_deg": 2.3302506715988978,
+        "metric_exit_lateral_offset": 36.364097019297894,
+        "metric_exit_altitude_change": -214.41606750891106
+      }
+    }
+  ],
+  "best": {
+    "mean_return": {
+      "mean": 57.40893043563998,
+      "std": 0.0
+    },
+    "success_rate": {
+      "mean": 1.0,
+      "std": 0.0
+    },
+    "crash_rate": {
+      "mean": 0.0,
+      "std": 0.0
+    }
+  },
+  "final": {
+    "mean_return": {
+      "mean": 57.23194877466451,
+      "std": 0.0
+    },
+    "success_rate": {
+      "mean": 1.0,
+      "std": 0.0
+    },
+    "crash_rate": {
+      "mean": 0.0,
+      "std": 0.0
+    }
+  }
+}

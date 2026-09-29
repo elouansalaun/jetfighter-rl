@@ -1,0 +1,26 @@
+name: 8_4_waypoints
+env:
+  task: waypoints
+  model: 3dof
+  action_mode: hierarchical
+  attitude_features: gravity
+  nz_neutral: compensated
+  action_exponent: 1.0
+algo: ppo
+total_timesteps: 5000000
+n_envs: 8
+seeds:
+- 0
+hyperparams:
+  n_steps: 1024
+  batch_size: 1024
+  learning_rate: 0.0003
+  lr_final: 3.0e-05
+  gamma: 0.995
+eval:
+  freq: 250000
+  episodes: 10
+init_from: 8_2_heading_altitude
+normalize_reward: true
+pretrain: null
+description: Enchaînement de points de passage 3D (3-DOF, hiérarchique)

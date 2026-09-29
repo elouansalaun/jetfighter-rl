@@ -1,0 +1,26 @@
+name: 8_1_level
+env:
+  task: level
+  model: 3dof
+  action_mode: hierarchical
+  attitude_features: gravity
+  nz_neutral: compensated
+  action_exponent: 1.0
+algo: ppo
+total_timesteps: 200000
+n_envs: 8
+seeds:
+- 0
+hyperparams:
+  n_steps: 512
+  batch_size: 512
+  learning_rate: 0.0003
+  gamma: 0.99
+eval:
+  freq: 20000
+  episodes: 10
+init_from: null
+normalize_reward: true
+pretrain: null
+description: Rattrapage d'assiette inusuelle -> palier ailes horizontales (3-DOF,
+  hiérarchique)
