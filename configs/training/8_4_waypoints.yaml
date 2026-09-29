@@ -1,6 +1,6 @@
-# 8.4 — Suivi de 4 points de passage 3D (critère : tous franchis)
+# 8.4 — Following 4 3D waypoints (criterion: all passed)
 name: 8_4_waypoints
-description: Enchaînement de points de passage 3D (3-DOF, hiérarchique)
+description: Chain of 3D waypoints (3-DOF, hierarchical)
 env:
   task: waypoints
   model: 3dof
@@ -13,9 +13,9 @@ hyperparams:
   n_steps: 1024
   batch_size: 1024
   learning_rate: 3.0e-4
-  lr_final: 3.0e-5   # décroissance linéaire : fin d'entraînement plus stable (cf. 8.2)
-  gamma: 0.995        # horizon plus long : un point de passage est à 20–40 s
+  lr_final: 3.0e-5   # linear decay: more stable end of training (cf. 8.2)
+  gamma: 0.995        # longer horizon: a waypoint is 20–40 s away
 eval: {freq: 250000, episodes: 10}
-init_from: 8_2_heading_altitude   # curriculum : tenue de cap et d'altitude déjà apprise
-# Option : partir d'une imitation de la référence (pilote auto / pilote scripté), puis RL.
+init_from: 8_2_heading_altitude   # curriculum: heading and altitude hold already learned
+# Option: start from an imitation of the reference (autopilot / scripted pilot), then RL.
 # pretrain: {episodes: 40, noise: 0.1, epochs: 30, critic_warmup: 5}

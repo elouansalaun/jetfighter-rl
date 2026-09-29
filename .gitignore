@@ -8,7 +8,7 @@ build/
 dist/
 uv.lock
 
-# Outils
+# Tools
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
@@ -16,7 +16,7 @@ uv.lock
 htmlcov/
 .ipynb_checkpoints/
 
-# Sorties d'expériences locales — les résultats de référence sont dans results/
+# Local experiment outputs — reference results are in results/
 /runs/
 /models/
 /outputs/

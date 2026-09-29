@@ -1,9 +1,9 @@
-"""Programme d'entraînement (curriculum) : une suite d'expériences décrite en YAML.
+"""Training curriculum: a sequence of experiments described in YAML.
 
-Chaque étape reprend un fichier de ``configs/training/`` et peut en surcharger ``model``,
-``action_mode``, ``init_from``, ``timesteps``, ``n_envs`` et ``name``. Une étape dont le
-modèle (ou le mode d'action) diffère de sa configuration prend par défaut le nom de
-celle-ci suffixé (``_6dof``, ``_low_level``).
+Each stage reuses a file from ``configs/training/`` and can override its ``model``,
+``action_mode``, ``init_from``, ``timesteps``, ``n_envs`` and ``name``. A stage whose
+model (or action mode) differs from its configuration is named by default after that
+configuration with a suffix (``_6dof``, ``_low_level``).
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ def stage_config(
 ) -> TrainConfig:
     unknown = set(stage) - STAGE_KEYS
     if unknown:
-        raise ValueError(f"Clés inconnues dans l'étape {stage} : {sorted(unknown)}")
+        raise ValueError(f"Unknown keys in stage {stage}: {sorted(unknown)}")
     cfg = TrainConfig.from_yaml(base_dir / stage["config"])
     env = {k: stage[k] for k in ("model", "action_mode") if k in stage}
     name = stage.get("name")

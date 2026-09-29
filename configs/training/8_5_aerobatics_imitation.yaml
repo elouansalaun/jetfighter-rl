@@ -1,9 +1,9 @@
-# Variante de 8.5 : imitation du pilote scripté (les quatre figures), critique entraîné
-# seul pendant 5 collectes, puis PPO prudent. La voltige est le cas typique où partir de
-# démonstrations aide : il faut enchaîner 20 s de commandes cohérentes avant la première
-# récompense de fin de figure.
+# 8.5 variant: imitation of the scripted pilot (all four maneuvers), critic trained alone
+# for 5 rollouts, then cautious PPO. Aerobatics is the typical case where starting from
+# demonstrations helps: 20 s of consistent commands are needed before the first
+# end-of-maneuver reward.
 name: 8_5_aerobatics_imitation
-description: Voltige, imitation du pilote scripté puis PPO (3-DOF, hiérarchique)
+description: Aerobatics, imitation of the scripted pilot then PPO (3-DOF, hierarchical)
 env:
   task: aerobatics
   model: 3dof

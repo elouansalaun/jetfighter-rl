@@ -1,6 +1,6 @@
-# Étape 8.6 : les cinq tâches en commande directe des gouvernes (6-DOF, 50 Hz), chacune
-# démarrée par imitation de « pilote auto + commandes de vol » puis affinée par PPO.
-# Lancer : python scripts/run_curriculum.py configs/training/curriculum_low_level.yaml --seeds 0
+# Step 8.6: the five tasks with direct control-surface commands (6-DOF, 50 Hz), each
+# warm-started by imitation of "autopilot + fly-by-wire" then fine-tuned with PPO.
+# Run: python scripts/run_curriculum.py configs/training/curriculum_low_level.yaml --seeds 0
 stages:
   - config: 8_6_level.yaml
   - config: 8_6_heading_altitude.yaml

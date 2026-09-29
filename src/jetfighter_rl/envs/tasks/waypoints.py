@@ -1,19 +1,19 @@
-"""Tâche 8.4 : suivi d'une suite de points de passage 3D.
+"""Task 8.4: following a sequence of 3D waypoints.
 
-Chaque épisode tire ``n_waypoints`` points : branches de 5 à 9 km (plus longues que le
-rayon de virage à 60° d'inclinaison, ≈ 3 km à 230 m/s), changement de
-direction jusqu'à ± ``max_turn`` d'une branche à l'autre, changement d'altitude jusqu'à
-± 800 m. Un point est franchi quand l'avion passe à moins de ``capture_radius`` à
-l'horizontale et ``capture_height`` en altitude ; on vise alors le suivant.
+Each episode draws ``n_waypoints`` points: legs of 5 to 9 km (longer than the turn radius
+at 60° of bank, ≈ 3 km at 230 m/s), direction change of up to ± ``max_turn`` from one leg
+to the next, altitude change of up to ± 800 m. A waypoint is passed when the aircraft
+flies within ``capture_radius`` horizontally and ``capture_height`` in altitude; the next
+one then becomes the target.
 
-Observations (dans le **repère de la trajectoire** : distances, gisement relatif à la
-route, dénivelé — invariantes par rotation autour de la verticale) pour le point visé et
-le suivant, plus la fraction de points restants.
+Observations (in the **flight-path frame**: distances, bearing relative to the course,
+height difference — invariant under rotation about the vertical) for the target waypoint
+and the next one, plus the fraction of waypoints remaining.
 
-Récompense : progression vers le point visé (différence de distance, *reward shaping*
-potentiel qui ne change pas la politique optimale), bonus par point franchi, petit coût
-par pas (aller vite), à-coups de commande. L'épisode se termine (``terminated``, sans
-pénalité) quand le dernier point est franchi : c'est la réussite.
+Reward: progress toward the target waypoint (distance difference, potential-based
+*reward shaping* that does not change the optimal policy), bonus per waypoint passed,
+small per-step cost (go fast), command jerks. The episode ends (``terminated``, without
+penalty) when the last waypoint is passed: that is success.
 """
 
 from __future__ import annotations
@@ -40,9 +40,9 @@ class WaypointsTask(Task):
     max_climb: float = 800.0
     capture_radius: float = 400.0
     capture_height: float = 150.0
-    vertical_weight: float = 2.0  # poids du dénivelé dans la distance de progression
-    cruise_speed: float = 230.0  # consigne du pilote automatique de référence
-    w_progress: float = 1.0  # par km de progression
+    vertical_weight: float = 2.0  # weight of the height difference in the progress distance
+    cruise_speed: float = 230.0  # setpoint of the reference autopilot
+    w_progress: float = 1.0  # per km of progress
     waypoint_bonus: float = 5.0
     final_bonus: float = 10.0
     w_time: float = 0.01
@@ -61,7 +61,7 @@ class WaypointsTask(Task):
 
     @property
     def max_step_cost(self) -> float:
-        # s'éloigner à 400 m/s coûte au plus 0.04 w_progress par pas de 0.1 s
+        # moving away at 400 m/s costs at most 0.04 w_progress per 0.1 s step
         return 0.05 * self.w_progress + self.w_time + self.w_smooth
 
     def sample_initial(self, rng: np.random.Generator, six_dof: bool) -> InitialCondition:
@@ -96,7 +96,7 @@ class WaypointsTask(Task):
         return self.waypoints[self.index] if self.index < len(self.waypoints) else None
 
     def _relative(self, wp: tuple[float, float, float], ins: Instruments) -> tuple[float, ...]:
-        """(distance horizontale, gisement relatif à la route, dénivelé)."""
+        """(horizontal distance, bearing relative to the course, height difference)."""
         dn, de = wp[0] - ins.north, wp[1] - ins.east
         rng_h = math.hypot(dn, de)
         return rng_h, angle_error(math.atan2(de, dn) - ins.course), wp[2] - ins.altitude

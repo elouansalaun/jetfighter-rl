@@ -1,4 +1,4 @@
-"""jetfighter_rl : apprentissage par renforcement de manœuvres d'avion de chasse,
-sur le simulateur ``jetsim`` (environnements Gymnasium, entraînement PPO/SAC, imitation)."""
+"""jetfighter_rl: reinforcement learning of fighter-jet maneuvers on the ``jetsim``
+simulator (Gymnasium environments, PPO/SAC training, imitation)."""
 
 __version__ = "0.1.0"

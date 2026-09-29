@@ -1,4 +1,4 @@
-"""Phase 8 : tâches d'apprentissage (critères, suivi, géométrie, politiques de référence)."""
+"""Phase 8: learning tasks (criteria, tracking, geometry, reference policies)."""
 
 import itertools
 import math
@@ -56,7 +56,7 @@ def test_registry_and_task_kwargs():
 
 
 # --------------------------------------------------------------------------
-# Géométrie
+# Geometry
 # --------------------------------------------------------------------------
 @pytest.mark.parametrize("model", ["3dof", "6dof"])
 def test_wind_axes_match_flight_path_angles(model):
@@ -67,17 +67,17 @@ def test_wind_axes_match_flight_path_angles(model):
     np.testing.assert_allclose(c_nw, dcm_from_euler(40 * DEG, 12 * DEG, 0.7), atol=1e-6)
     geo = env.geometry()
     np.testing.assert_allclose(geo.position, [0.0, 0.0, -5000.0], atol=1e-6)
-    assert geo.lift_dir[2] < 0  # portance vers le haut
+    assert geo.lift_dir[2] < 0  # lift pointing up
 
 
 # --------------------------------------------------------------------------
-# 8.1 et 8.2 : critères de la roadmap
+# 8.1 and 8.2: roadmap criteria
 # --------------------------------------------------------------------------
 def test_level_recovery_time_criterion():
     env = JetEnv(EnvConfig(task="level"))
     info = flown(env, AutopilotPolicy(env), seed=4)
     assert info["is_success"] and 0 < info["metrics"]["recovery_time"] < 10
-    # sans action corrective depuis une forte inclinaison : jamais rétabli
+    # no corrective action from a steep bank: never recovered
     env = JetEnv(EnvConfig(task="level", episode_time=5.0))
     env.reset(seed=0, options={"initial_condition": InitialCondition(5000, 220, bank=60 * DEG)})
     done = False
@@ -106,7 +106,7 @@ def test_heading_altitude_overshoot_is_measured():
 
 
 # --------------------------------------------------------------------------
-# 8.3 : virage soutenu
+# 8.3: sustained turn
 # --------------------------------------------------------------------------
 def test_sustained_turn_reference_is_the_optimum():
     from jetsim.aircraft.dynamics_3dof import PointMassAircraft
@@ -118,8 +118,8 @@ def test_sustained_turn_reference_is_the_optimum():
     ac = PointMassAircraft(load_aircraft("f16"))
     for v in (ref.speed - 30, ref.speed + 30):
         assert sustained_turn(ac, 5000.0, v).turn_rate < ref.turn_rate
-    assert sustained_turn_reference(5010.0) is ref  # cache par tranche de 250 m
-    assert sustained_turn_reference(9000.0).turn_rate < ref.turn_rate  # air plus rare
+    assert sustained_turn_reference(5010.0) is ref  # cached in 250 m bands
+    assert sustained_turn_reference(9000.0).turn_rate < ref.turn_rate  # thinner air
 
 
 def test_sustained_turn_baseline_meets_criterion():
@@ -130,7 +130,7 @@ def test_sustained_turn_baseline_meets_criterion():
 
 
 # --------------------------------------------------------------------------
-# 8.4 : points de passage
+# 8.4: waypoints
 # --------------------------------------------------------------------------
 def test_waypoint_generation_and_capture():
     env = JetEnv(EnvConfig(task="waypoints"))
@@ -141,7 +141,7 @@ def test_waypoint_generation_and_capture():
     legs = [math.dist(a, b) for a, b in itertools.pairwise(pts)]
     assert len(task.waypoints) == 4 and all(4999 < d < 9001 for d in legs)
     a = np.zeros(3)
-    # se rapprocher du point visé rapporte, le franchir donne le bonus
+    # getting closer to the target waypoint pays, passing it gives the bonus
     wp = task.waypoints[0]
     closer = replace(
         ins, north=ins.north + 0.1 * (wp[0] - ins.north), east=ins.east + 0.1 * (wp[1] - ins.east)
@@ -165,7 +165,7 @@ def test_waypoints_baseline_completes_the_course():
 
 
 # --------------------------------------------------------------------------
-# 8.5 : voltige
+# 8.5: aerobatics
 # --------------------------------------------------------------------------
 def test_maneuver_definitions():
     assert segments_for("loop", 1.0) == [("pitch", 2 * math.pi)]
@@ -182,10 +182,10 @@ def test_loop_progress_is_tracked_through_the_vertical():
     env.reset(seed=0)
     task, ins = env.task, env.instruments
     heading = ins.course
-    # vecteur vitesse qui tourne dans le plan vertical : montée, dos, descente, palier
+    # velocity vector rotating in the vertical plane: climb, inverted, descent, level
     angles = np.linspace(0, 2 * math.pi, 73)
     for k, th in enumerate(angles[1:], start=1):
-        # au-delà de 90° la route s'inverse et l'avion est sur le dos (repère continu)
+        # beyond 90° the course reverses and the aircraft is inverted (continuous frame)
         c_nw = dcm_from_euler(0.0, 0.0, heading) @ np.array(
             [[math.cos(th), 0, math.sin(th)], [0, 1, 0], [-math.sin(th), 0, math.cos(th)]]
         )
@@ -193,8 +193,8 @@ def test_loop_progress_is_tracked_through_the_vertical():
         if k == 36:
             assert task.progress_fraction() == pytest.approx(0.5, abs=0.02)
             assert abs(task.lift_error(FlightGeometry(np.zeros(3), c_nw))) < 1e-6
-    assert task.segment is None  # boucle complète
-    assert task.done()  # sortie ailes à plat (instruments de départ)
+    assert task.segment is None  # complete loop
+    assert task.done()  # wings-level exit (starting instruments)
 
 
 def test_roll_progress_about_velocity():
@@ -226,14 +226,14 @@ def test_scripted_loop_in_6dof():
 
 
 def test_coning_out_of_plane_does_not_count_as_a_loop():
-    """Reward hacking observé : virer de 90° puis tourner autour de l'axe latéral faisait
-    « tourner » l'angle projeté dans le plan de la boucle sans faire de looping."""
+    """Observed reward hacking: turning 90° then rotating around the lateral axis made the
+    angle projected onto the loop plane "rotate" without flying a loop."""
     env = JetEnv(EnvConfig(task="aerobatics", task_kwargs={"maneuvers": "loop"}))
     env.reset(seed=0)
     task, ins = env.task, env.instruments
     e1, e2, e3 = task.frame.T
     for k in range(1, 200):
-        phi = 0.3 * k  # petit cône autour de e2 (vitesse presque latérale)
+        phi = 0.3 * k  # small cone around e2 (almost lateral velocity)
         v = 0.95 * e2 + 0.31 * (math.cos(phi) * e1 + math.sin(phi) * e3)
         v /= np.linalg.norm(v)
         w = np.cross(e3, v)
@@ -247,7 +247,7 @@ def test_loop_exit_requires_the_initial_heading():
     env = JetEnv(EnvConfig(task="aerobatics", task_kwargs={"maneuvers": "loop"}))
     env.reset(seed=0)
     task, ins = env.task, env.instruments
-    task.index = len(task.segments)  # figure parcourue
+    task.index = len(task.segments)  # maneuver completed
     wrong = replace(ins, course=ins.course + math.radians(90))
     task.update(wrong, env.geometry(), 1.0)
     assert not task.done()

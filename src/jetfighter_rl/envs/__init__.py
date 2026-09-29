@@ -1,12 +1,12 @@
-"""Environnements Gymnasium pour l'apprentissage par renforcement (phases 7 à 10).
+"""Gymnasium environments for reinforcement learning (phases 7 to 10).
 
-Identifiants enregistrés (paramètres surchargeables à la création) ::
+Registered identifiers (parameters can be overridden at creation) ::
 
-    gymnasium.make("JetFighter/Level-v0")                          # stabilisation, 3-DOF
-    gymnasium.make("JetFighter/HeadingAltitude-v0", model="6dof")  # cap/altitude/vitesse
+    gymnasium.make("JetFighter/Level-v0")                          # stabilization, 3-DOF
+    gymnasium.make("JetFighter/HeadingAltitude-v0", model="6dof")  # heading/altitude/speed
     gymnasium.make("JetFighter/Level-v0", action_mode="low_level")
 
-Nécessite l'extra ``[rl]`` (gymnasium).
+Requires the ``[rl]`` extra (gymnasium).
 """
 
 from __future__ import annotations

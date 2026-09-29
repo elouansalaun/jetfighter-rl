@@ -1,7 +1,7 @@
-"""Entraînement des agents (phase 8) : configurations YAML, PPO/SAC, plusieurs graines,
-journalisation détaillée, comparaison à la référence, transfert de politiques.
+"""Agent training (phase 8): YAML configurations, PPO/SAC, multiple seeds,
+detailed logging, comparison with the reference, policy transfer.
 
-Nécessite l'extra ``[rl]`` (stable-baselines3, torch, tensorboard).
+Requires the ``[rl]`` extra (stable-baselines3, torch, tensorboard).
 """
 
 from jetfighter_rl.training.config import TrainConfig

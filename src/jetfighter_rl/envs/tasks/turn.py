@@ -1,29 +1,29 @@
-"""Tâche 8.3 : virage coordonné à taux maximal **soutenu**.
+"""Task 8.3: coordinated turn at maximum **sustained** rate.
 
-Le taux de virage soutenu est celui qu'on peut tenir sans perdre d'énergie (poussée =
-traînée, en palier). Il est maximal pour une vitesse particulière (≈ 250 m/s à 5 000 m
-pour notre F-16). Tirer plus fort donne un taux instantané plus élevé, mais l'avion
-ralentit, puis ne peut plus tenir l'altitude : sur un épisode de 60 s, la meilleure
-stratégie est bien le virage soutenu optimal.
+The sustained turn rate is the one that can be held without losing energy (thrust =
+drag, in level flight). It peaks at a particular speed (≈ 250 m/s at 5,000 m for our
+F-16). Pulling harder gives a higher instantaneous rate, but the aircraft slows down and
+then can no longer hold altitude: over a 60 s episode, the best strategy is indeed the
+optimal sustained turn.
 
-Référence ω_ref(h) : maximum sur la vitesse de ``performance.sustained_turn`` (modèle
-point-masse, poussée max), mis en cache par tranche de 250 m. Elle sert de référence aux
-deux modèles. Le 6-DOF (tables aérodynamiques différentes de la polaire) tient environ
-90 % de cette référence avec le pilote de référence : ses seuils de réussite sont
-corrigés par ``six_dof_factor`` (approximation, faute d'équilibre en virage 6-DOF).
+Reference ω_ref(h): maximum over speed of ``performance.sustained_turn`` (point-mass
+model, max thrust), cached in 250 m bands. It serves as the reference for both models.
+The 6-DOF (aerodynamic tables different from the drag polar) holds about 90 % of this
+reference with the reference pilot: its success thresholds are corrected by
+``six_dof_factor`` (an approximation, lacking a 6-DOF turn trim).
 
-Récompense par pas : + taux de virage / ω_ref (dans le sens demandé, plafonné à 1)
-**multiplié** par un facteur de qualité exp(−|Δh|/300 m − déficit d'énergie/300 m),
-− perte d'énergie sous l'énergie du virage optimal (h₀ + V_opt²/2g), − écart d'altitude,
-− dérapage², − à-coups de commande.
+Per-step reward: + turn rate / ω_ref (in the requested direction, capped at 1)
+**multiplied** by a quality factor exp(−|Δh|/300 m − energy deficit/300 m), − energy loss
+below the energy of the optimal turn (h₀ + V_opt²/2g), − altitude deviation,
+− sideslip², − command jerks.
 
-Le facteur multiplicatif vient d'un *reward hacking* observé : avec des termes seulement
-additifs (et saturés), le premier agent entraîné avait appris une **spirale descendante**
-(taux ×2.5, mais 3 km d'altitude perdus) — une fois les pénalités saturées, perdre de
-l'altitude ne coûtait plus rien de plus.
+The multiplicative factor comes from an observed case of *reward hacking*: with purely
+additive (and saturated) terms, the first trained agent had learned a **descending
+spiral** (rate ×2.5, but 3 km of altitude lost) — once the penalties were saturated,
+losing altitude cost nothing more.
 
-Réussite : sur les ``window`` dernières secondes, taux moyen ≥ ``rate_fraction`` · ω_ref,
-altitude à ± 200 m et énergie au plus 150 m sous l'énergie de référence.
+Success: over the last ``window`` seconds, mean rate ≥ ``rate_fraction`` · ω_ref,
+altitude within ± 200 m and energy at most 150 m below the reference energy.
 """
 
 from __future__ import annotations
@@ -52,7 +52,7 @@ class SustainedTurnReference:
     altitude: float
     turn_rate: float  # ω_ref [rad/s]
     speed: float  # V_opt [m/s]
-    load_factor: float  # n au virage optimal
+    load_factor: float  # n at the optimal turn
 
     @property
     def bank(self) -> float:
@@ -84,7 +84,7 @@ def _reference_cached(altitude: float) -> SustainedTurnReference:
 
 
 def sustained_turn_reference(altitude: float) -> SustainedTurnReference:
-    """Virage soutenu optimal à l'altitude donnée (arrondie à 250 m, mis en cache)."""
+    """Optimal sustained turn at the given altitude (rounded to 250 m, cached)."""
     return _reference_cached(round(altitude / 250.0) * 250.0)
 
 
@@ -92,7 +92,7 @@ def sustained_turn_reference(altitude: float) -> SustainedTurnReference:
 class SustainedTurnTask(Task):
     name: str = "sustained_turn"
     episode_time: float = 60.0
-    window: float = 20.0  # fenêtre d'évaluation du taux soutenu [s]
+    window: float = 20.0  # evaluation window for the sustained rate [s]
     rate_fraction: float = 0.90
     altitude_tolerance: float = 200.0
     energy_tolerance: float = 150.0
@@ -101,12 +101,12 @@ class SustainedTurnTask(Task):
     w_altitude: float = 0.3
     w_beta: float = 0.2
     w_smooth: float = 0.1
-    six_dof_factor: float = 0.90  # taux soutenu 6-DOF / référence point-masse (mesuré)
+    six_dof_factor: float = 0.90  # 6-DOF sustained rate / point-mass reference (measured)
     six_dof_energy_tolerance: float = 250.0
-    quality_scale: float = 300.0  # [m] décroissance du gain de taux avec Δh et ΔE
-    k_speed_bank: float = 0.2 * DEG  # pilote de référence : inclinaison par m/s d'écart
+    quality_scale: float = 300.0  # [m] decay of the rate gain with Δh and ΔE
+    k_speed_bank: float = 0.2 * DEG  # reference pilot: bank per m/s of deviation
     n_features: int = 5
-    direction: float = field(default=1.0, init=False)  # +1 : virage à droite
+    direction: float = field(default=1.0, init=False)  # +1: right turn
     ref: SustainedTurnReference | None = field(default=None, init=False)
     h0: float = field(default=5000.0, init=False)
     turn_rate: float = field(default=0.0, init=False)
@@ -173,7 +173,7 @@ class SustainedTurnTask(Task):
         rate = clip(self.direction * self.turn_rate / self.ref.turn_rate, -1.0, 1.0)
         deficit = max(self.reference_energy - ins.specific_energy - 50.0, 0.0)
         dh = abs(ins.altitude - self.h0)
-        # le taux de virage ne rapporte que s'il est « soutenu » : altitude et énergie tenues
+        # the turn rate only pays if it is "sustained": altitude and energy held
         quality = math.exp(-dh / self.quality_scale - deficit / self.quality_scale)
         return {
             "turn_rate": self.w_rate * rate * (quality if rate > 0 else 1.0),
@@ -184,7 +184,7 @@ class SustainedTurnTask(Task):
         }
 
     def _window_stats(self) -> tuple[float, float, float]:
-        """(taux moyen, écart d'altitude max, déficit d'énergie final) sur la fenêtre."""
+        """(mean rate, max altitude deviation, final energy deficit) over the window."""
         if not self._history:
             return 0.0, math.inf, math.inf
         rates = [h[1] for h in self._history]
@@ -223,10 +223,10 @@ class SustainedTurnTask(Task):
     def baseline_command(
         self, ins: Instruments, autopilot: Autopilot, dt: float
     ) -> HighLevelCommand:
-        """Plein gaz, altitude tenue par le facteur de charge, vitesse tenue par
-        l'inclinaison (plus lent que V_opt -> on desserre le virage). Le facteur de charge
-        du pilote automatique est relevé à 8.8 g (le virage optimal demande jusqu'à ≈ 8 g
-        à basse altitude) et l'inclinaison bornée en conséquence."""
+        """Full throttle, altitude held with the load factor, speed held with the bank
+        (slower than V_opt -> ease off the turn). The autopilot's load factor limit is
+        raised to 8.8 g (the optimal turn needs up to ≈ 8 g at low altitude) and the bank
+        is bounded accordingly."""
         assert self.ref is not None
         if autopilot.g.nz_max < 8.8:
             autopilot.g = replace(autopilot.g, nz_max=8.8)

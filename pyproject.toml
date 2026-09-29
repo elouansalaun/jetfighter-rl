@@ -12,7 +12,7 @@ license = { text = "MIT" }
 authors = [{ name = "Elouan Salaun" }]
 keywords = ["reinforcement-learning", "ppo", "gymnasium", "flight-control", "f-16", "imitation-learning"]
 dependencies = [
-    # simulateur de vol (phases 1 à 6), dépôt séparé
+    # flight simulator (phases 1 to 6), separate repository
     "jetsim @ git+https://github.com/elouansalaun/jetfighter-sim.git@v0.1.0",
     "gymnasium>=0.29",
     "numpy>=1.26",
@@ -42,13 +42,13 @@ Repository = "https://github.com/elouansalaun/jetfighter-rl"
 Simulator = "https://github.com/elouansalaun/jetfighter-sim"
 
 [tool.hatch.metadata]
-allow-direct-references = true  # dépendance git vers jetsim
+allow-direct-references = true  # git dependency on jetsim
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/jetfighter_rl"]
 
 # --------------------------------------------------------------------------
-# Outils
+# Tools
 # --------------------------------------------------------------------------
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -62,8 +62,8 @@ src = ["src", "tests"]
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "N", "UP", "B", "NPY", "RUF"]
 ignore = [
-    "N802", "N803", "N806",  # notations physiques : T, P, C_bn, Ixx...
-    "RUF001", "RUF002", "RUF003",  # caractères grecs / accents dans les docstrings
+    "N802", "N803", "N806",  # physics notation: T, P, C_bn, Ixx...
+    "RUF001", "RUF002", "RUF003",  # Greek letters / special characters in docstrings
 ]
 
 [tool.mypy]

@@ -1,11 +1,11 @@
-# 8.6 — Passage au bas niveau : « sustained_turn » sur le 6-DOF, l'agent commande directement
-# manette, profondeur, ailerons et direction (plus de commandes de vol pour le protéger).
-# Cadence 50 Hz (les commandes de vol de référence ne tiennent pas à 10 Hz). Démarrage par
-# imitation de « pilote auto + commandes de vol », critique seul, puis PPO prudent.
-# Critère de la roadmap : ≥ 90 % des performances de l'agent hiérarchique, sans dépasser
-# les limites structurales (pénalités overload/sideslip ajoutées en bas niveau).
+# 8.6 — Switch to low-level: "sustained_turn" on the 6-DOF, the agent directly commands
+# throttle, elevator, ailerons and rudder (no more fly-by-wire to protect it).
+# 50 Hz rate (the reference fly-by-wire does not hold at 10 Hz). Warm start by
+# imitation of "autopilot + fly-by-wire", critic only, then cautious PPO.
+# Roadmap criterion: ≥ 90 % of the hierarchical agent's performance, without exceeding
+# structural limits (overload/sideslip penalties added in low-level mode).
 name: 8_6_sustained_turn
-description: sustained_turn en commande directe des gouvernes (6-DOF, 50 Hz), imitation puis PPO
+description: sustained_turn with direct control-surface commands (6-DOF, 50 Hz), imitation then PPO
 env:
   task: sustained_turn
   model: 6dof
@@ -22,9 +22,9 @@ hyperparams:
   learning_rate: 3.0e-5
   lr_final: 1.0e-5
   clip_range: 0.1
-  gamma: 0.998          # horizon ≈ 10 s à 50 Hz, comme γ = 0.99 à 10 Hz
-  gae_lambda: 0.99      # à 50 Hz, λ = 0.95 ne « voit » que 0.4 s : PPO dégradait la politique imitée
-  policy_kwargs: {net_arch: [256, 256], log_std_init: -3.5}   # bruit ≈ 0.7° de profondeur (σ = 0.14 : 3.5°, trop)
+  gamma: 0.998          # horizon ≈ 10 s at 50 Hz, like γ = 0.99 at 10 Hz
+  gae_lambda: 0.99      # at 50 Hz, λ = 0.95 only "sees" 0.4 s: PPO degraded the imitated policy
+  policy_kwargs: {net_arch: [256, 256], log_std_init: -3.5}   # noise ≈ 0.7° of elevator (σ = 0.14: 3.5°, too much)
 eval: {freq: 250000, episodes: 10}
 init_from: null
 pretrain: {episodes: 40, noise: 0.05, epochs: 30, critic_warmup: 5}

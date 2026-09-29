@@ -1,44 +1,44 @@
-"""Tâche 8.5 : voltige — looping, tonneau, Immelmann, Split-S.
+"""Task 8.5: aerobatics — loop, roll, Immelmann, Split-S.
 
-Chaque figure est une suite de **segments** de référence, décrits dans le repère de la
-manœuvre (figé au départ : e₁ = route initiale à l'horizontale, e₂ = à droite, e₃ = vers
-le bas) :
+Each maneuver is a sequence of reference **segments**, described in the maneuver frame
+(frozen at the start: e₁ = initial course in the horizontal plane, e₂ = to the right,
+e₃ = down):
 
-* ``Pitch(Δθ)`` : le vecteur vitesse tourne de Δθ **dans le plan vertical** (e₁, e₃),
-  portance dans ce plan, vers le centre de la boucle (Δθ > 0 : vers le haut au départ) ;
-* ``Roll(Δφ)`` : l'avion tourne de Δφ **autour de son vecteur vitesse**, trajectoire
-  inchangée.
+* ``Pitch(Δθ)``: the velocity vector rotates by Δθ **in the vertical plane** (e₁, e₃),
+  lift in that plane, toward the center of the loop (Δθ > 0: upward at the start);
+* ``Roll(Δφ)``: the aircraft rotates by Δφ **about its velocity vector**, flight path
+  unchanged.
 
-| Figure     | Segments                          | Sortie                          |
+| Maneuver   | Segments                          | Exit                            |
 |------------|-----------------------------------|---------------------------------|
-| looping    | Pitch(+360°)                      | même cap, ailes à plat          |
-| tonneau    | Roll(±360°)                       | même cap, ailes à plat          |
-| Immelmann  | Pitch(+180°), Roll(±180°)         | cap inversé, plus haut          |
-| Split-S    | Roll(±180°), Pitch(−180°)         | cap inversé, plus bas           |
+| loop       | Pitch(+360°)                      | same heading, wings level       |
+| roll       | Roll(±360°)                       | same heading, wings level       |
+| Immelmann  | Pitch(+180°), Roll(±180°)         | reversed heading, higher        |
+| Split-S    | Roll(±180°), Pitch(−180°)         | reversed heading, lower         |
 
-Les angles sont suivis **sans singularité** à partir du repère vent (``FlightGeometry``) :
-un looping passe par la verticale, où l'inclinaison μ et la route χ ne sont plus définies.
+Angles are tracked **without singularity** from the wind frame (``FlightGeometry``): a
+loop passes through the vertical, where bank μ and course χ are no longer defined.
 
-Récompense : progression le long des segments (**nouveaux records** seulement, en
-fraction de l'angle total : 40 points pour la figure complète + 20 à la sortie), écarts à
-la référence (sortie du plan de la boucle, portance mal orientée, trajectoire qui dévie pendant un
-tonneau), petit coût par pas, puis, une fois les segments parcourus, retour ailes à plat.
-La figure est réussie (``done``) quand tous les segments sont parcourus et que l'avion est
-stabilisé (|μ| < 15°, |γ| < 10°) au bon cap (± 30° du cap initial, ou de son inverse
-pour l'Immelmann et le Split-S). Le tangage n'est compté que si la vitesse reste près du
-plan de la figure (|v·e₂| < sin 30°).
+Reward: progress along the segments (**new records** only, as a fraction of the total
+angle: 40 points for the complete maneuver + 20 on exit), deviations from the reference
+(leaving the loop plane, misoriented lift, flight path drifting during a roll), small
+per-step cost, then, once the segments are done, return to wings level. The maneuver
+succeeds (``done``) when all segments are done and the aircraft is stabilized
+(|μ| < 15°, |γ| < 10°) on the right heading (± 30° of the initial heading, or of its
+reverse for the Immelmann and the Split-S). Pitch only counts if the velocity stays close
+to the maneuver plane (|v·e₂| < sin 30°).
 
-Pièges rencontrés à l'entraînement : avec une progression de 10 points seulement, l'agent
-préférait ne pas faire la figure (voler droit ne coûte rien pendant un segment de
-tangage) ; avec une progression réversible (ΔΦ), une tentative ratée (monter puis
-retomber) ne rapportait rien et l'agent n'essayait pas ; avec des angles d'Euler dans
-l'observation, un agent montait à la verticale et y restait pour garder sa progression ;
-avec des pénalités de suivi de 0.2 par pas, une tentative ratée laissait l'avion hors du
-plan pour le reste de l'épisode (jusqu'à −60 points) et l'agent cessait d'essayer.
+Pitfalls met during training: with only 10 points of progress, the agent preferred not
+to perform the maneuver (flying straight costs nothing during a pitch segment); with a
+reversible progress (ΔΦ), a failed attempt (climb then fall back) paid nothing and the
+agent did not try; with Euler angles in the observation, an agent climbed to the vertical
+and stayed there to keep its progress; with tracking penalties of 0.2 per step, a failed
+attempt left the aircraft out of the plane for the rest of the episode (down to −60
+points) and the agent stopped trying.
 
-Pilote de référence (``baseline_command``) : suivi scripté des segments (facteur de
-charge constant et roulis pour garder la portance dans le plan, ou roulis à taux fixe
-en compensant la pesanteur), puis pilote automatique en palier.
+Reference pilot (``baseline_command``): scripted segment tracking (constant load factor
+and roll to keep the lift in the plane, or fixed-rate roll while compensating for
+gravity), then autopilot in level flight.
 """
 
 from __future__ import annotations
@@ -57,7 +57,7 @@ from jetfighter_rl.envs.tasks.base import DEG, FlightGeometry, InitialCondition,
 PITCH, ROLL = "pitch", "roll"
 MANEUVERS: tuple[str, ...] = ("loop", "roll", "immelmann", "split_s")
 
-# Conditions d'entrée : (altitude min, max), (vitesse min, max) [m, m/s]
+# Entry conditions: (min, max altitude), (min, max speed) [m, m/s]
 ENTRY: dict[str, tuple[tuple[float, float], tuple[float, float]]] = {
     "loop": ((3000, 7000), (240, 300)),
     "roll": ((3000, 8000), (180, 280)),
@@ -75,47 +75,47 @@ def segments_for(maneuver: str, roll_sign: float) -> list[tuple[str, float]]:
         return [(PITCH, math.pi), (ROLL, roll_sign * math.pi)]
     if maneuver == "split_s":
         return [(ROLL, roll_sign * math.pi), (PITCH, -math.pi)]
-    raise ValueError(f"Figure inconnue : {maneuver!r} (disponibles : {MANEUVERS})")
+    raise ValueError(f"Unknown maneuver: {maneuver!r} (available: {MANEUVERS})")
 
 
 def _signed_angle(a: Vec, b: Vec, axis: Vec) -> float:
-    """Angle signé de ``a`` vers ``b`` autour de ``axis`` (vecteurs unitaires)."""
+    """Signed angle from ``a`` to ``b`` about ``axis`` (unit vectors)."""
     return math.atan2(float(np.cross(a, b) @ axis), float(a @ b))
 
 
 @dataclass
 class AerobaticsTask(Task):
     name: str = "aerobatics"
-    maneuvers: tuple[str, ...] = MANEUVERS  # figures tirées au hasard à chaque épisode
+    maneuvers: tuple[str, ...] = MANEUVERS  # maneuvers drawn at random for each episode
     episode_time: float = 45.0
     segment_tolerance: float = 5 * DEG
     exit_bank: float = 15 * DEG
     exit_gamma: float = 10 * DEG
-    exit_heading: float = 30 * DEG  # écart de cap toléré à la sortie (cap initial ou inverse)
-    max_out_of_plane: float = math.sin(30 * DEG)  # |v·e₂| au-delà duquel le tangage ne compte plus
-    w_progress: float = 40.0  # réparti sur toute la figure
-    w_plane: float = 0.05  # faibles : pénalités cumulées sur 45 s -> l'agent n'essayait plus
+    exit_heading: float = 30 * DEG  # exit heading tolerance (initial heading or its reverse)
+    max_out_of_plane: float = math.sin(30 * DEG)  # |v·e₂| beyond which pitch no longer counts
+    w_progress: float = 40.0  # spread over the whole maneuver
+    w_plane: float = 0.05  # small: penalties accumulated over 45 s -> the agent stopped trying
     w_lift: float = 0.05
     w_track: float = 0.1
     w_exit: float = 0.2
     w_time: float = 0.01
     w_smooth: float = 0.05
     completion_bonus: float = 20.0
-    pull_load_factor: float = 5.0  # pilote de référence
+    pull_load_factor: float = 5.0  # reference pilot
     n_features: int = 17
     event_terms: frozenset[str] = frozenset({"progress", "success"})
     maneuver: str = field(default="loop", init=False)
     segments: list[tuple[str, float]] = field(default_factory=list, init=False)
     index: int = field(default=0, init=False)
-    seg_progress: float = field(default=0.0, init=False)  # angle parcouru (signé)
-    frame: Vec = field(default_factory=lambda: np.eye(3), init=False)  # colonnes e1, e2, e3
+    seg_progress: float = field(default=0.0, init=False)  # angle covered (signed)
+    frame: Vec = field(default_factory=lambda: np.eye(3), init=False)  # columns e1, e2, e3
     origin: Vec = field(default_factory=lambda: np.zeros(3), init=False)
     _geo: FlightGeometry | None = field(default=None, init=False)
     _prev_theta: float = field(default=0.0, init=False)
     _prev_lift: Vec = field(default_factory=lambda: np.zeros(3), init=False)
     _seg_start_velocity: Vec = field(default_factory=lambda: np.zeros(3), init=False)
     _last_delta: float = field(default=0.0, init=False)
-    _seg_best: float = field(default=0.0, init=False)  # meilleure progression du segment
+    _seg_best: float = field(default=0.0, init=False)  # best progress within the segment
     _completed: bool = field(default=False, init=False)
     _finished_time: float = field(default=math.inf, init=False)
     _exit_state: tuple[float, float, float] = field(default=(0.0, 0.0, 0.0), init=False)
@@ -130,7 +130,7 @@ class AerobaticsTask(Task):
     @property
     def max_step_cost(self) -> float:
         shaping = max(self.w_plane + self.w_lift, self.w_track, 2 * self.w_exit)
-        # reculer coûte au plus ≈ 0.05 rad par pas, sur un angle total ≥ π
+        # moving backward costs at most ≈ 0.05 rad per step, over a total angle ≥ π
         return shaping + self.w_time + self.w_smooth + 0.016 * self.w_progress
 
     # ------------------------------------------------------------------
@@ -194,13 +194,13 @@ class AerobaticsTask(Task):
         return done / self.total_angle
 
     def desired_lift(self, geo: FlightGeometry, sign: float) -> Vec:
-        """Portance voulue dans un segment de tangage : dans le plan, vers le centre."""
+        """Desired lift in a pitch segment: in the plane, toward the center."""
         d: Vec = np.asarray(sign * np.cross(self.frame[:, 1], geo.velocity_dir), dtype=np.float64)
         n = float(np.linalg.norm(d))
         return d / n if n > 1e-9 else geo.lift_dir
 
     def lift_error(self, geo: FlightGeometry) -> float:
-        """Angle signé portance -> portance voulue autour de la vitesse (0 hors tangage)."""
+        """Signed angle lift -> desired lift about the velocity (0 outside pitch segments)."""
         seg = self.segment
         if seg is None or seg[0] != PITCH:
             return 0.0
@@ -217,9 +217,9 @@ class AerobaticsTask(Task):
                 theta = self._plane_angle(geo)
                 delta = angle_error(theta - self._prev_theta)
                 self._prev_theta = theta
-                # hors du plan de la figure, l'angle projeté n'a plus de sens : sans cette
-                # garde, un agent tournait de 90° puis « enroulait » l'angle en quelques
-                # secondes par de petits mouvements autour de l'axe latéral (looping en 6 s)
+                # out of the maneuver plane, the projected angle is meaningless: without this
+                # guard, an agent turned 90° and then "wound up" the angle within a few
+                # seconds with small motions around the lateral axis (a loop in 6 s)
                 if abs(float(geo.velocity_dir @ self.frame[:, 1])) > self.max_out_of_plane:
                     delta = 0.0
             else:
@@ -228,8 +228,8 @@ class AerobaticsTask(Task):
             self.seg_progress += delta
             sign = math.copysign(1.0, angle)
             after = clip(sign * self.seg_progress, 0.0, abs(angle))
-            # seule une progression nouvelle rapporte (record du segment) ; reculer ne
-            # coûte rien : une tentative partielle reste payante, ce qui encourage l'essai
+            # only new progress pays (segment record); moving backward costs nothing:
+            # a partial attempt still pays off, which encourages trying
             self._last_delta = max(after - self._seg_best, 0.0)
             self._seg_best = max(self._seg_best, after)
             if sign * self.seg_progress >= abs(angle) - self.segment_tolerance:
@@ -247,7 +247,7 @@ class AerobaticsTask(Task):
                 and heading_error < self.exit_heading)  # fmt: skip
 
     def _exit_errors(self, ins: Instruments, geo: FlightGeometry) -> tuple[float, float, float]:
-        """(écart de cap à la sortie attendue [rad], écart latéral [m], Δh [m])."""
+        """(heading deviation from the expected exit [rad], lateral offset [m], Δh [m])."""
         reverse = self.maneuver in ("immelmann", "split_s")
         e1 = self.frame[:, 0]
         expected = math.atan2(e1[1], e1[0]) + (math.pi if reverse else 0.0)
@@ -337,7 +337,7 @@ class AerobaticsTask(Task):
     def baseline_command(
         self, ins: Instruments, autopilot: Autopilot, dt: float
     ) -> HighLevelCommand:
-        """Pilote scripté : suit les segments, puis remet l'avion en palier."""
+        """Scripted pilot: follows the segments, then brings the aircraft back to level flight."""
         geo = self._geo
         assert geo is not None
         seg = self.segment
@@ -355,8 +355,8 @@ class AerobaticsTask(Task):
         if kind == PITCH:
             roll_rate = clip(3.0 * self.lift_error(geo), -90 * DEG, 90 * DEG)
             return HighLevelCommand(nz=self.pull_load_factor, roll_rate=roll_rate, throttle=1.0)
-        # tonneau : taux de roulis fixe, ralenti en fin de segment ; le facteur de charge
-        # compense la composante de la pesanteur portée par la portance (trajectoire droite)
+        # roll: fixed roll rate, slowed at the end of the segment; the load factor
+        # compensates for the gravity component along the lift (straight flight path)
         rate = sign * clip(2.5 * remaining + 20 * DEG, 0.0, 150 * DEG)
         nz = -float(geo.lift_dir[2]) * 1.0
         return HighLevelCommand(nz=nz, roll_rate=rate, throttle=1.0)

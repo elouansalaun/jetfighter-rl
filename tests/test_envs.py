@@ -1,4 +1,4 @@
-"""Phase 7 : environnement Gymnasium JetEnv."""
+"""Phase 7: JetEnv Gymnasium environment."""
 
 import math
 
@@ -11,7 +11,7 @@ from gymnasium.utils.env_checker import check_env  # noqa: E402
 from jetsim.control.fbw import HighLevelCommand  # noqa: E402
 from jetsim.viz.recorder import replay  # noqa: E402
 
-import jetfighter_rl.envs  # noqa: E402,F401  (enregistre les identifiants)
+import jetfighter_rl.envs  # noqa: E402,F401  (registers the identifiers)
 from jetfighter_rl.envs.baselines import AutopilotPolicy, RandomPolicy, evaluate  # noqa: E402
 from jetfighter_rl.envs.jet_env import (  # noqa: E402
     EnvConfig,
@@ -83,7 +83,7 @@ def test_initial_condition_is_honoured(model):
     assert ins.bank == pytest.approx(60 * DEG, abs=1e-6)
     assert ins.gamma == pytest.approx(10 * DEG, abs=1e-6)
     assert ins.course == pytest.approx(1.0, abs=1e-6)
-    assert math.hypot(ins.p, ins.r) == pytest.approx(0.3, rel=0.05)  # roulis autour de la vitesse
+    assert math.hypot(ins.p, ins.r) == pytest.approx(0.3, rel=0.05)  # roll around the velocity
 
 
 def test_truncation_and_episode_info():
@@ -102,7 +102,7 @@ def test_crash_terminates_with_penalty():
     env = JetEnv(EnvConfig(task="level"))
     ic = InitialCondition(altitude=800, airspeed=250, gamma=-20 * DEG)
     env.reset(seed=0, options={"initial_condition": ic})
-    push = np.array([-1.0, 0.0, 1.0], dtype=np.float32)  # −3 g, plein gaz : piqué
+    push = np.array([-1.0, 0.0, 1.0], dtype=np.float32)  # −3 g, full throttle: dive
     for _ in range(300):
         obs, _, terminated, truncated, info = env.step(push)
         if terminated or truncated:
@@ -176,7 +176,7 @@ def test_autopilot_policy_requires_hierarchical_mode():
 
 @pytest.mark.parametrize(("speed", "action", "limit"), [(290, -1.0, -3.6), (290, 1.0, 9.2)])
 def test_fbw_load_factor_limiter_does_not_overshoot(speed, action, limit):
-    """Échelon de n_z à pleine commande à grande vitesse : pas de sortie d'enveloppe."""
+    """Full-command n_z step at high speed: no envelope exit."""
     env = JetEnv(EnvConfig(task="level", model="6dof", episode_time=3.0))
     env.reset(seed=0, options={"initial_condition": InitialCondition(5000, speed)})
     extreme = 1.0
@@ -202,8 +202,8 @@ def test_expo_action_mapping_option():
 
 
 def test_attitude_features_are_continuous_through_the_vertical():
-    """Passage de la verticale en looping : les angles d'Euler basculent de 180°, pas les
-    composantes de la pesanteur utilisées dans l'observation."""
+    """Passing through the vertical in a loop: the Euler angles flip by 180°, the gravity
+    components used in the observation do not."""
     env = JetEnv(EnvConfig(task="aerobatics", task_kwargs={"maneuvers": "loop"}))
     policy = AutopilotPolicy(env)
     obs, _ = env.reset(seed=3)
@@ -218,8 +218,8 @@ def test_attitude_features_are_continuous_through_the_vertical():
         prev = (bank, obs[4:10].copy())
         if terminated or truncated:
             break
-    assert jumps_euler >= 1  # l'inclinaison μ bascule bien au sommet de la boucle
-    assert jump_obs < 0.5  # mais pas l'observation
+    assert jumps_euler >= 1  # bank μ does flip at the top of the loop
+    assert jump_obs < 0.5  # but the observation does not
 
 
 def test_old_runs_keep_euler_attitude_features(tmp_path):

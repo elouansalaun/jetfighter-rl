@@ -1,6 +1,6 @@
-# 8.1 — Stabilisation depuis une attitude perturbée (critère : retour en palier < 10 s)
+# 8.1 — Stabilization from a perturbed attitude (criterion: back to level flight < 10 s)
 name: 8_1_level
-description: Rattrapage d'assiette inusuelle -> palier ailes horizontales (3-DOF, hiérarchique)
+description: Unusual-attitude recovery -> wings-level cruise (3-DOF, hierarchical)
 env:
   task: level
   model: 3dof

@@ -1,16 +1,16 @@
-"""Imitation (clonage de comportement) de la politique de référence, avant le RL.
+"""Imitation (behavior cloning) of the reference policy, before RL.
 
-Piste prévue par la roadmap pour l'étape 8.6 (initialiser un agent bas niveau par
-imitation de « agent hiérarchique + commandes de vol »), utile aussi en hiérarchique : un
-agent initialisé par imitation du pilote automatique vole d'emblée correctement, et le RL
-n'a plus qu'à l'améliorer.
+Lead planned in the roadmap for step 8.6 (initialize a low-level agent by imitating
+"hierarchical agent + fly-by-wire"), also useful in hierarchical mode: an agent
+initialized by imitating the autopilot flies correctly from the start, and RL only has
+to improve it.
 
-* ``collect_demonstrations`` : épisodes pilotés par la référence ; l'action **exécutée**
-  est bruitée (méthode DART) mais l'action **enregistrée** est celle de la référence : les
-  démonstrations couvrent ainsi les petits écarts que l'agent commettra, et il apprend à
-  les corriger (sans bruit, le clone dérive dès qu'il s'écarte de la trajectoire idéale).
-* ``behavior_cloning`` : régression (erreur quadratique) de la moyenne de la politique
-  PPO — ou de l'acteur SAC — sur les actions de la référence.
+* ``collect_demonstrations``: episodes flown by the reference; the executed action is
+  noisy (DART method) but the **recorded** action is the reference's: the demonstrations
+  thus cover the small deviations the agent will make, and it learns to correct them
+  (without noise, the clone drifts as soon as it leaves the ideal trajectory).
+* ``behavior_cloning``: regression (squared error) of the mean of the PPO policy — or of
+  the SAC actor — onto the reference's actions.
 """
 
 from __future__ import annotations
@@ -43,7 +43,7 @@ class Demonstrations:
 def collect_demonstrations(
     env_config: EnvConfig, episodes: int = 50, noise: float = 0.1, seed: int = 20_000
 ) -> Demonstrations:
-    """Épisodes de la référence avec bruit d'exécution (voir le module)."""
+    """Reference episodes with execution noise (see the module)."""
     env = JetEnv(env_config)
     policy = reference_policy(env)
     rng = np.random.default_rng(seed)
@@ -68,11 +68,11 @@ def collect_demonstrations(
 
 def _predicted_mean(model: BaseAlgorithm, obs: torch.Tensor) -> torch.Tensor:
     if isinstance(model, PPO):
-        dist: Any = model.policy.get_distribution(obs).distribution  # gaussienne diagonale
+        dist: Any = model.policy.get_distribution(obs).distribution  # diagonal Gaussian
         return dist.mean
     if isinstance(model, SAC):
         return model.actor(obs, deterministic=True)
-    raise TypeError(f"Algorithme non pris en charge : {type(model).__name__}")
+    raise TypeError(f"Unsupported algorithm: {type(model).__name__}")
 
 
 def behavior_cloning(
@@ -82,7 +82,7 @@ def behavior_cloning(
     batch_size: int = 256,
     learning_rate: float = 1e-3,
 ) -> list[float]:
-    """Ajuste la politique sur les démonstrations ; renvoie la perte moyenne par époque."""
+    """Fits the policy to the demonstrations; returns the mean loss per epoch."""
     policy: Any = model.policy
     device = policy.device
     obs = torch.as_tensor(demos.observations, device=device)

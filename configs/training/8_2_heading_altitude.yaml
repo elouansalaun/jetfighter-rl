@@ -1,8 +1,8 @@
-# 8.2 — Changement de cap, d'altitude et de vitesse (critère : erreur faible, pas de
-# dépassement excessif). L'agent part de la politique de 8.1 (entrées communes copiées) :
-# depuis zéro, les premiers essais piquaient au sol pendant plus de 150 000 pas.
+# 8.2 — Heading, altitude and speed change (criterion: small error, no excessive
+# overshoot). The agent starts from the 8.1 policy (shared inputs copied):
+# from scratch, the first attempts dived into the ground for more than 150,000 steps.
 name: 8_2_heading_altitude
-description: Rallier un cap, une altitude et une vitesse tirés au hasard (3-DOF, hiérarchique)
+description: Reach a randomly drawn heading, altitude and speed (3-DOF, hierarchical)
 env:
   task: heading_altitude
   model: 3dof
@@ -15,9 +15,9 @@ hyperparams:
   n_steps: 1024
   batch_size: 1024
   learning_rate: 3.0e-4
-  lr_final: 3.0e-5   # décroissance linéaire : la 2e exécution de 8.2 oscillait entre 0 et 60 % de réussite en fin d'entraînement
+  lr_final: 3.0e-5   # linear decay: the 2nd run of 8.2 oscillated between 0 and 60 % success at the end of training
   gamma: 0.99
 eval: {freq: 100000, episodes: 10}
-init_from: 8_1_level   # curriculum : part de la politique de stabilisation (entrées communes)
-# Option : partir d'une imitation de la référence (pilote auto / pilote scripté), puis RL.
+init_from: 8_1_level   # curriculum: starts from the stabilization policy (shared inputs)
+# Option: start from an imitation of the reference (autopilot / scripted pilot), then RL.
 # pretrain: {episodes: 40, noise: 0.1, epochs: 30, critic_warmup: 5}

@@ -1,16 +1,16 @@
-# Programme complet de la phase 8 en mode hiérarchique : chaque tâche d'abord en 3-DOF,
-# puis transférée sur le 6-DOF (init_from : même tâche en 3-DOF, copie intégrale des poids).
-# Lancer : python scripts/run_curriculum.py configs/training/curriculum.yaml
-# Durée indicative sur 8 cœurs (≈ 3 000–4 000 pas/s en 3-DOF, 4 fois moins en 6-DOF) :
-# une dizaine d'heures pour 3 graines — lancer le soir, ou --seeds 0 pour un premier essai.
+# Full phase 8 curriculum in hierarchical mode: each task first in 3-DOF,
+# then transferred to the 6-DOF (init_from: same task in 3-DOF, full weight copy).
+# Run: python scripts/run_curriculum.py configs/training/curriculum.yaml
+# Indicative duration on 8 cores (≈ 3,000–4,000 steps/s in 3-DOF, 4 times fewer in 6-DOF):
+# about ten hours for 3 seeds — run it overnight, or --seeds 0 for a first try.
 stages:
   - config: 8_1_level.yaml
   - config: 8_1_level.yaml
     model: 6dof
     init_from: 8_1_level
-    timesteps: 1000000   # 200 000 ne suffisaient pas : l'agent 3-DOF oscillait en roulis
-  # 8.2 et 8.5 : départ par imitation de la référence (RL pur trop irrégulier sur 8.2, et
-  # incapable de découvrir looping, Immelmann et Split-S sur 8.5)
+    timesteps: 1000000   # 200,000 was not enough: the 3-DOF agent oscillated in roll
+  # 8.2 and 8.5: start from imitation of the reference (pure RL too erratic on 8.2, and
+  # unable to discover the loop, Immelmann and Split-S on 8.5)
   - config: 8_2_heading_altitude_imitation.yaml
   - config: 8_2_heading_altitude_imitation.yaml
     model: 6dof
@@ -26,7 +26,7 @@ stages:
   - config: 8_4_waypoints.yaml
     model: 6dof
     init_from: 8_4_waypoints
-    timesteps: 3000000   # 1,5 M : encore 10–40 % de crashs
+    timesteps: 3000000   # 1.5 M: still 10–40 % crashes
   - config: 8_5_aerobatics_imitation.yaml
   - config: 8_5_aerobatics_imitation.yaml
     model: 6dof

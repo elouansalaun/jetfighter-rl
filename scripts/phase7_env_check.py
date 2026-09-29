@@ -1,18 +1,18 @@
-"""Vérification de l'environnement d'apprentissage (phase 7) et essai d'entraînement PPO.
+"""Check of the learning environment (phase 7) and PPO training trial.
 
-Étapes :
-1. ``check_env`` de Gymnasium sur toutes les combinaisons tâche × modèle × mode d'action ;
-2. débit (pas d'agent par seconde) avec 1 environnement puis ``--n-envs`` en parallèle ;
-3. politiques de référence (pilote automatique, aléatoire) sur les deux tâches ;
-4. optionnel (``--ppo-steps N``) : entraînement PPO en mode hiérarchique, suivi TensorBoard
-   dans ``runs/``, modèle sauvegardé dans ``models/``, vol de l'agent exporté pour Tacview.
+Steps:
+1. Gymnasium ``check_env`` on every task × model × action mode combination;
+2. throughput (agent steps per second) with 1 environment, then ``--n-envs`` in parallel;
+3. reference policies (autopilot, random) on both tasks;
+4. optional (``--ppo-steps N``): PPO training in hierarchical mode, TensorBoard tracking
+   in ``runs/``, model saved in ``models/``, agent flight exported for Tacview.
 
-Installation : ``uv pip install -e ".[dev,rl]"``.
+Installation: ``uv pip install -e ".[dev,rl]"``.
 
-Usage :
+Usage:
     python scripts/phase7_env_check.py
     python scripts/phase7_env_check.py --ppo-steps 100000 --task level --n-envs 8
-    tensorboard --logdir runs          # courbes d'apprentissage
+    tensorboard --logdir runs          # learning curves
 """
 
 from __future__ import annotations
@@ -64,17 +64,17 @@ def train_ppo(args: argparse.Namespace) -> None:
     def policy(obs):
         return model.predict(obs, deterministic=True)[0]
 
-    print(f"\nPPO sur « {args.task} » ({args.model}, hiérarchique), {args.n_envs} environnements")
-    print(f"  avant        : {evaluate(eval_env, policy, episodes=args.eval_episodes)}")
+    print(f'\nPPO on "{args.task}" ({args.model}, hierarchical), {args.n_envs} environments')
+    print(f"  before       : {evaluate(eval_env, policy, episodes=args.eval_episodes)}")
     t0 = time.perf_counter()
     chunk = max(args.ppo_steps // 5, 1)
     while model.num_timesteps < args.ppo_steps:
         model.learn(chunk, reset_num_timesteps=False, tb_log_name=run)
         ev = evaluate(eval_env, policy, episodes=args.eval_episodes)
-        print(f"  {model.num_timesteps:>8} pas ({time.perf_counter() - t0:5.0f} s) : {ev}")
+        print(f"  {model.num_timesteps:>8} steps ({time.perf_counter() - t0:5.0f} s): {ev}")
     Path("models").mkdir(exist_ok=True)
     model.save(Path("models") / run)
-    # Vol de l'agent enregistré pour Tacview
+    # Agent flight recorded for Tacview
     rec_env = JetEnv(EnvConfig(task=args.task, model=args.model, record=True))
     obs, _ = rec_env.reset(seed=2026)
     done = False
@@ -84,7 +84,7 @@ def train_ppo(args: argparse.Namespace) -> None:
     rec = rec_env.recording()
     if rec is not None:
         path = export_recording(rec, Path("outputs/flights") / f"{run}.acmi", pilot="Agent PPO")
-        print(f"  modèle : models/{run}.zip   vol Tacview : {path}")
+        print(f"  model: models/{run}.zip   Tacview flight: {path}")
     venv.close()
 
 
@@ -110,24 +110,24 @@ def main() -> None:
                     print(f"   OK  {task:17s} {model}  {mode:12s} obs {env.observation_space.shape}"
                           f"  action {env.action_space.shape}")  # fmt: skip
 
-        print("\n2. Débit (pas d'agent/s, 1 pas = 0.1 s de vol)")
+        print("\n2. Throughput (agent steps/s, 1 step = 0.1 s of flight)")
         try:
             for model in ("3dof", "6dof"):
                 cfg = EnvConfig(task="heading_altitude", model=model)
                 steps = 600 if model == "6dof" else 2000
                 one = throughput(cfg, 1, steps)
                 many = throughput(cfg, args.n_envs, steps * 2) if args.n_envs > 1 else one
-                par = f"{many:6.0f} ({args.n_envs} env en parallèle)"
+                par = f"{many:6.0f} ({args.n_envs} envs in parallel)"
                 print(f"   {model} : {one:6.0f} (1 env)   {par}")
         except ImportError:
-            print('   (stable-baselines3 absent : uv pip install -e ".[rl]")')
+            print('   (stable-baselines3 missing: uv pip install -e ".[rl]")')
 
-        print("\n3. Politiques de référence")
+        print("\n3. Reference policies")
         for task in ("level", "heading_altitude"):
             env = JetEnv(EnvConfig(task=task, model=args.model))
             n = args.eval_episodes
-            print(f"   {task:17s} pilote auto : {evaluate(env, AutopilotPolicy(env), episodes=n)}")
-            print(f"   {'':17s} aléatoire   : {evaluate(env, RandomPolicy(env), episodes=n)}")
+            print(f"   {task:17s} autopilot   : {evaluate(env, AutopilotPolicy(env), episodes=n)}")
+            print(f"   {'':17s} random      : {evaluate(env, RandomPolicy(env), episodes=n)}")
 
     if args.ppo_steps > 0:
         train_ppo(args)

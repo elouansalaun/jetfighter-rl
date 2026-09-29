@@ -1,14 +1,14 @@
-"""Récompenses modulaires : une somme de termes nommés et pondérés, tous journalisés.
+"""Modular rewards: a sum of named, weighted terms, all of them logged.
 
-Chaque tâche renvoie un dictionnaire ``{nom du terme: valeur}``. L'environnement en fait la
-somme et range le détail dans ``info["reward_terms"]``, ce qui permet de voir dans
-TensorBoard **quel terme** pilote l'apprentissage (et de repérer le *reward hacking*).
+Each task returns a ``{term name: value}`` dictionary. The environment sums it and stores
+the breakdown in ``info["reward_terms"]``, which shows in TensorBoard which term
+drives learning (and helps spot *reward hacking*).
 
-Conventions : les termes de coût sont **négatifs** et normalisés à peu près dans [−1, 0]
-par pas de décision ; les bonus sont petits et positifs ; la pénalité de crash est
-ponctuelle et grande : pénalité fixe **plus le coût maximal de tous les pas restants**
-(``Task.max_step_cost``), pour que s'écraser soit toujours pire que de continuer à voler,
-même loin de la consigne (sinon l'agent apprendrait à abréger les épisodes).
+Conventions: cost terms are **negative** and normalized roughly to [−1, 0] per decision
+step; bonuses are small and positive; the crash penalty is one-off and large: a fixed
+penalty plus the maximum cost of all remaining steps (``Task.max_step_cost``), so that
+crashing is always worse than continuing to fly, even far from the target (otherwise the
+agent would learn to cut episodes short).
 """
 
 from __future__ import annotations
@@ -27,22 +27,22 @@ def total(terms: Mapping[str, float]) -> float:
 
 
 def normalized_error(error: float, scale: float) -> float:
-    """|erreur| / échelle, saturé à 1 (coût borné, gradient constant loin de la cible)."""
+    """|error| / scale, saturated at 1 (bounded cost, constant gradient far from the target)."""
     return min(abs(error) / scale, 1.0)
 
 
 def angle_error(angle: float) -> float:
-    """Angle ramené dans [−π, π[."""
+    """Angle wrapped to [−π, π[."""
     return (angle + math.pi) % (2 * math.pi) - math.pi
 
 
 def action_smoothness(action: npt.NDArray[np.float64], previous: npt.NDArray[np.float64]) -> float:
-    """Écart quadratique moyen entre deux actions successives (actions dans [−1, 1])."""
+    """Mean squared difference between two successive actions (actions in [−1, 1])."""
     diff = np.asarray(action) - np.asarray(previous)
     return float(np.mean(diff * diff)) / 4.0  # ∈ [0, 1]
 
 
 def accumulate(sums: dict[str, float], terms: Mapping[str, float]) -> None:
-    """Cumule les termes d'un épisode (pour les statistiques de fin d'épisode)."""
+    """Accumulates an episode's terms (for end-of-episode statistics)."""
     for k, v in terms.items():
         sums[k] = sums.get(k, 0.0) + v

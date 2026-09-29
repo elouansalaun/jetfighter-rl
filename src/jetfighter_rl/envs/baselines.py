@@ -1,14 +1,13 @@
-"""Politiques de référence et évaluation.
+"""Reference policies and evaluation.
 
-* ``AutopilotPolicy`` : le pilote automatique de la phase 6 (ou le pilote scripté de la
-  tâche, pour la voltige), branché sur l'espace d'action hiérarchique de l'environnement.
-  C'est la **référence à battre** (et la preuve que la tâche est faisable avec cette
-  récompense).
-* ``RandomPolicy`` : actions uniformes ; donne le plancher de performance.
-* ``evaluate`` : rendement moyen, taux de succès et de crash sur des épisodes à graines fixes.
+* ``AutopilotPolicy``: the phase 6 autopilot (or the task's scripted pilot, for
+  aerobatics), plugged into the environment's hierarchical action space. It is the
+  reference to beat (and the proof that the task is feasible with this reward).
+* ``RandomPolicy``: uniform actions; gives the performance floor.
+* ``evaluate``: mean return, success and crash rates over episodes with fixed seeds.
 
-Une politique est un appelable ``action = policy(observation)`` ; ``reset()`` est appelé après
-chaque ``env.reset()``.
+A policy is a callable ``action = policy(observation)``; ``reset()`` is called after each
+``env.reset()``.
 """
 
 from __future__ import annotations
@@ -33,12 +32,12 @@ class Policy(Protocol):
 
 
 class AutopilotPolicy:
-    """Pilote automatique -> action hiérarchique normalisée (mesures vraies de l'env)."""
+    """Autopilot -> normalized hierarchical action (true measurements from the env)."""
 
     def __init__(self, env: Any) -> None:
         self.env: JetEnv = env.unwrapped
         if not self.env.hierarchical:
-            raise ValueError("La politique pilote automatique requiert le mode hiérarchique.")
+            raise ValueError("The autopilot policy requires hierarchical mode.")
         self.ap = Autopilot(self.env.model)
 
     def reset(self) -> None:
@@ -56,19 +55,18 @@ class AutopilotPolicy:
 
 
 class LowLevelReferencePolicy:
-    """Référence du mode bas niveau (6-DOF) : pilote automatique (ou pilote scripté) **et**
-    commandes de vol électriques, dont on renvoie les ordres aux gouvernes.
+    """Low-level mode reference (6-DOF): autopilot (or scripted pilot) **and** fly-by-wire,
+    whose control surface commands are returned.
 
-    C'est l'« agent hiérarchique + commandes de vol » que la roadmap propose d'imiter pour
-    démarrer l'étape 8.6. Les commandes de vol sont réglées pour 50 Hz : à 10 Hz elles
-    oscillent et l'avion s'écrase, d'où ``agent_dt = 0.02`` dans les configurations
-    bas niveau.
+    This is the "hierarchical agent + fly-by-wire" that the roadmap proposes to imitate to
+    kick off step 8.6. The fly-by-wire is tuned for 50 Hz: at 10 Hz it oscillates and the
+    aircraft crashes, hence ``agent_dt = 0.02`` in the low-level configurations.
     """
 
     def __init__(self, env: Any) -> None:
         self.env: JetEnv = env.unwrapped
         if self.env.hierarchical or not self.env.six_dof:
-            raise ValueError("Référence bas niveau : mode low_level sur le 6-DOF seulement.")
+            raise ValueError("Low-level reference: low_level mode on the 6-DOF only.")
         self.ap = Autopilot(self.env.model)
         self.fbw = FlyByWire(self.env.model)  # type: ignore[arg-type]
 
@@ -87,7 +85,7 @@ class LowLevelReferencePolicy:
 
 
 def reference_policy(env: Any) -> AutopilotPolicy | LowLevelReferencePolicy:
-    """Politique de référence adaptée au mode d'action de l'environnement."""
+    """Reference policy matching the environment's action mode."""
     return AutopilotPolicy(env) if env.unwrapped.hierarchical else LowLevelReferencePolicy(env)
 
 
@@ -111,12 +109,13 @@ class Evaluation:
     crash_rate: float
     mean_length: float  # [s]
     returns: tuple[float, ...]
-    metrics: dict[str, float] = field(default_factory=dict)  # moyennes des métriques de tâche
+    metrics: dict[str, float] = field(default_factory=dict)  # means of the task metrics
 
     def __str__(self) -> str:
-        return (f"rendement {self.mean_return:8.1f} ± {self.std_return:5.1f} | "
-                f"succès {100 * self.success_rate:5.1f} % | crash {100 * self.crash_rate:5.1f} % | "
-                f"durée {self.mean_length:5.1f} s")  # fmt: skip
+        return (f"return {self.mean_return:8.1f} ± {self.std_return:5.1f} | "
+                f"success {100 * self.success_rate:5.1f} % | "
+                f"crash {100 * self.crash_rate:5.1f} % | "
+                f"length {self.mean_length:5.1f} s")  # fmt: skip
 
 
 def evaluate(
@@ -125,7 +124,7 @@ def evaluate(
     episodes: int = 10,
     seed: int = 1000,
 ) -> Evaluation:
-    """Évalue une politique sur ``episodes`` épisodes (graines seed, seed+1, …)."""
+    """Evaluates a policy over ``episodes`` episodes (seeds seed, seed+1, …)."""
     returns, successes, crashes, lengths = [], 0, 0, []
     metrics: dict[str, list[float]] = {}
     for k in range(episodes):

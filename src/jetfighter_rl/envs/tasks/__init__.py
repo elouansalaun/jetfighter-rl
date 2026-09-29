@@ -1,15 +1,15 @@
-"""Tâches d'apprentissage (phase 8 de la roadmap).
+"""Learning tasks (phase 8 of the roadmap).
 
-Une tâche fournit conditions initiales, consignes, observations propres, termes de
-récompense, critère de réussite et politique de référence (voir ``base.py``).
+A task provides initial conditions, setpoints, own observations, reward terms,
+success criterion and reference policy (see ``base.py``).
 
-| Nom                  | Étape | Contenu                                                  |
+| Name                 | Step  | Content                                                  |
 |----------------------|-------|----------------------------------------------------------|
-| ``level``            | 8.1   | rattrapage d'assiette inusuelle, retour en palier < 10 s |
-| ``heading_altitude`` | 8.2   | cap, altitude et vitesse tirés au hasard                 |
-| ``sustained_turn``   | 8.3   | virage coordonné à taux maximal soutenu                  |
-| ``waypoints``        | 8.4   | suite de points de passage 3D                            |
-| ``aerobatics``       | 8.5   | looping, tonneau, Immelmann, Split-S                     |
+| ``level``            | 8.1   | unusual-attitude recovery, back to level flight < 10 s   |
+| ``heading_altitude`` | 8.2   | randomly drawn heading, altitude and speed               |
+| ``sustained_turn``   | 8.3   | coordinated turn at maximum sustained rate               |
+| ``waypoints``        | 8.4   | sequence of 3D waypoints                                 |
+| ``aerobatics``       | 8.5   | loop, roll, Immelmann, Split-S                           |
 """
 
 from __future__ import annotations
@@ -33,7 +33,7 @@ TASKS: dict[str, type[Task]] = {
 
 def make_task(name: str, **kwargs: Any) -> Task:
     if name not in TASKS:
-        raise ValueError(f"Tâche inconnue : {name!r} (disponibles : {sorted(TASKS)})")
+        raise ValueError(f"Unknown task: {name!r} (available: {sorted(TASKS)})")
     if "maneuvers" in kwargs and isinstance(kwargs["maneuvers"], str):
         kwargs["maneuvers"] = (kwargs["maneuvers"],)
     return TASKS[name](**kwargs)

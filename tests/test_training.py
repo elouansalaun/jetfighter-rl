@@ -1,4 +1,4 @@
-"""Phase 8 : outillage d'entraînement (configurations, entraînement, transfert, évaluation)."""
+"""Phase 8: training tooling (configurations, training, transfer, evaluation)."""
 
 import json
 from dataclasses import replace
@@ -37,7 +37,7 @@ def test_training_configs_are_valid(path):
     kwargs = cfg.algo_kwargs()
     if cfg.algo == "ppo":
         assert (kwargs["n_steps"] * cfg.n_envs) % kwargs["batch_size"] == 0
-    assert len(cfg.seeds) >= 3  # bonne pratique : 3 graines minimum
+    assert len(cfg.seeds) >= 3  # good practice: at least 3 seeds
 
 
 def test_curriculum_stages():
@@ -49,7 +49,7 @@ def test_curriculum_stages():
     six = cfgs[1]
     assert six.env["model"] == "6dof" and six.init_from == "8_1_level"
     assert six.seeds == [5] and six.n_envs == 2
-    # chaque transfert pointe vers une étape antérieure du programme
+    # each transfer points to an earlier stage of the curriculum
     for k, c in enumerate(cfgs):
         if c.init_from:
             assert c.init_from in names[:k]
@@ -113,7 +113,7 @@ def test_transfer_3dof_to_6dof_copies_everything(trained_run):
         policy_kwargs={"net_arch": [128, 128]},
     )
     report = transfer_weights(src, dst)
-    assert not report.partial and report.skipped == ["log_std"]  # exploration réinitialisée
+    assert not report.partial and report.skipped == ["log_std"]  # exploration reset
     obs = JetEnv(EnvConfig(task="level")).reset(seed=0)[0]
     np.testing.assert_allclose(
         src.predict(obs, deterministic=True)[0], dst.predict(obs, deterministic=True)[0]
@@ -126,10 +126,10 @@ def test_transfer_to_a_task_with_more_observations(trained_run):
     env = JetEnv(EnvConfig(task="heading_altitude"))
     dst = PPO("MlpPolicy", env, n_steps=64, policy_kwargs={"net_arch": [128, 128]})
     report = transfer_weights(src, dst)
-    assert report.partial  # premières couches : entrées communes seulement
+    assert report.partial  # first layers: shared inputs only
     obs = env.reset(seed=0)[0]
     n_common = src.observation_space.shape[0]
-    obs[n_common:] = 0.0  # entrées nouvelles à zéro : même action que la source
+    obs[n_common:] = 0.0  # new inputs at zero: same action as the source
     np.testing.assert_allclose(
         src.predict(obs[:n_common], deterministic=True)[0],
         dst.predict(obs, deterministic=True)[0],
@@ -165,14 +165,14 @@ def test_evaluation_tools(trained_run, tmp_path):
     runs, _ = trained_run
     path = best_model_of("smoke", runs)
     results = compare(path, EnvConfig(task="level", episode_time=2.0), episodes=2)
-    assert set(results) == {"agent", "référence", "aléatoire"}
+    assert set(results) == {"agent", "reference", "random"}
     assert "recovery_time" in format_comparison(results)
     acmi, recs = export_side_by_side(
         path, tmp_path / "vol.acmi", EnvConfig(task="level", episode_time=2.0)
     )
     text = acmi.read_text()
-    assert "Pilot=Agent RL" in text and "Pilot=Pilote auto" in text
-    assert set(recs) == {"Agent RL", "Pilote auto"}
+    assert "Pilot=Agent RL" in text and "Pilot=Autopilot" in text
+    assert set(recs) == {"Agent RL", "Autopilot"}
     fig = plot_comparison(recs, title="test")
     assert len(fig.axes) == 6
 
@@ -196,7 +196,7 @@ def test_imitation_of_the_reference_policy():
     model = PPO("MlpPolicy", env, n_steps=64, policy_kwargs={"net_arch": [64, 64]})
     losses = behavior_cloning(model, demos, epochs=40, batch_size=64)
     assert losses[-1] < 0.2 * losses[0]
-    # le clone reproduit (en moyenne) les actions de la référence sur les états vus
+    # the clone reproduces (on average) the reference's actions on the visited states
     pred = model.predict(demos.observations, deterministic=True)[0]
     assert np.mean(np.abs(pred - demos.actions)) < 0.1
 
@@ -212,7 +212,7 @@ def test_missing_parent_run_fails_early_with_a_hint(tmp_path):
     cfg = tiny("child", init_from="no_such_run")
     with pytest.raises(FileNotFoundError, match="init-from none"):
         train_seeds(cfg, runs_dir=tmp_path, verbose=0)
-    assert not (tmp_path / "child").exists()  # rien de créé
+    assert not (tmp_path / "child").exists()  # nothing created
 
 
 def test_linear_learning_rate_schedule():
@@ -234,6 +234,6 @@ def test_low_level_curriculum_and_reference():
     assert env_cfg.action_mode == "low_level" and env_cfg.agent_dt == 0.02
     assert env_cfg.discount == pytest.approx(0.998)
     env = JetEnv(replace(env_cfg, episode_time=3.0))
-    assert env.observation_space.shape == (19 + 4 + 3,)  # + position des gouvernes
+    assert env.observation_space.shape == (19 + 4 + 3,)  # + control surface positions
     ev = evaluate(env, reference_policy(env), episodes=1, seed=0)
     assert ev.crash_rate == 0.0

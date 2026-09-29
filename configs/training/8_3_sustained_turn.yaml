@@ -1,7 +1,7 @@
-# 8.3 — Virage coordonné à taux maximal soutenu (critère : ≥ 90 % du taux optimal, sans
-# perte d'énergie ni d'altitude)
+# 8.3 — Coordinated turn at maximum sustained rate (criterion: ≥ 90 % of the optimal rate,
+# without energy or altitude loss)
 name: 8_3_sustained_turn
-description: Virage soutenu optimal (3-DOF, hiérarchique)
+description: Optimal sustained turn (3-DOF, hierarchical)
 env:
   task: sustained_turn
   model: 3dof
@@ -14,9 +14,9 @@ hyperparams:
   n_steps: 1024
   batch_size: 1024
   learning_rate: 3.0e-4
-  lr_final: 3.0e-5   # décroissance linéaire : fin d'entraînement plus stable (cf. 8.2)
+  lr_final: 3.0e-5   # linear decay: more stable end of training (cf. 8.2)
   gamma: 0.99
 eval: {freq: 100000, episodes: 10}
-init_from: 8_1_level   # curriculum : évite les crashs du début (rattrapage déjà appris)
-# Option : partir d'une imitation de la référence (pilote auto / pilote scripté), puis RL.
+init_from: 8_1_level   # curriculum: avoids early crashes (recovery already learned)
+# Option: start from an imitation of the reference (autopilot / scripted pilot), then RL.
 # pretrain: {episodes: 40, noise: 0.1, epochs: 30, critic_warmup: 5}

@@ -1,22 +1,21 @@
-"""Initialisation d'une politique à partir d'une autre (curriculum, 3-DOF -> 6-DOF).
+"""Initializing a policy from another one (curriculum, 3-DOF -> 6-DOF).
 
-Les observations commencent toujours par les mêmes grandeurs (état propre de l'avion,
-puis action précédente) ; seules les grandeurs propres à la tâche, à la fin, changent.
-On copie donc :
+Observations always start with the same quantities (the aircraft's own state, then the
+previous action); only the task-specific quantities, at the end, change. We therefore copy:
 
-* tous les paramètres de même forme (3-DOF -> 6-DOF sur la même tâche : copie intégrale) ;
-* pour une première couche dont seul le nombre d'entrées diffère, les colonnes des
-  entrées communes (les nouvelles entrées partent de poids nuls : au départ, la politique
-  les ignore et se comporte comme l'ancienne) ;
-* rien d'autre (les couches de sortie d'un autre espace d'action sont réinitialisées).
+* every parameter with the same shape (3-DOF -> 6-DOF on the same task: full copy);
+* for a first layer where only the number of inputs differs, the columns of the shared
+  inputs (new inputs start with zero weights: initially the policy ignores them and
+  behaves like the old one);
+* nothing else (output layers for a different action space are reinitialized).
 
-L'écart-type d'exploration (``log_std``) n'est **pas** copié : la politique source a
-réduit son exploration pour sa propre tâche ; la reprendre telle quelle empêche de
-découvrir la nouvelle (constaté sur le virage soutenu : l'agent issu de la stabilisation
-n'osait plus incliner). On garde l'écart-type initial de la nouvelle expérience.
+The exploration standard deviation (``log_std``) is **not** copied: the source policy
+reduced its exploration for its own task; reusing it as is prevents discovering the new
+one (observed on the sustained turn: the agent coming from stabilization no longer dared
+to bank). The new experiment's initial standard deviation is kept.
 
-Les critiques de SAC, dont l'entrée est (observation, action) concaténées, ne sont copiés
-que si les formes coïncident.
+SAC critics, whose input is the concatenated (observation, action), are only copied if
+the shapes match.
 """
 
 from __future__ import annotations
@@ -36,13 +35,13 @@ class TransferReport:
 
     def __str__(self) -> str:
         return (
-            f"{len(self.copied)} tenseurs copiés, {len(self.partial)} partiellement "
-            f"(entrées communes), {len(self.skipped)} réinitialisés"
+            f"{len(self.copied)} tensors copied, {len(self.partial)} partially "
+            f"(shared inputs), {len(self.skipped)} reinitialized"
         )
 
 
 def transfer_weights(source: BaseAlgorithm, target: BaseAlgorithm) -> TransferReport:
-    """Copie les poids compatibles de ``source`` dans ``target`` (en place)."""
+    """Copies the compatible weights of ``source`` into ``target`` (in place)."""
     report = TransferReport()
     src = source.policy.state_dict()
     dst = target.policy.state_dict()
@@ -73,13 +72,13 @@ def transfer_weights(source: BaseAlgorithm, target: BaseAlgorithm) -> TransferRe
 
 
 def resolve_model_path(init_from: str, runs_dir: str | Path = "runs") -> Path:
-    """``init_from`` : chemin d'un ``.zip``, ou nom d'une expérience déjà entraînée
-    (on prend alors le meilleur modèle de la meilleure graine de sa dernière exécution)."""
+    """``init_from``: path to a ``.zip``, or name of an already trained experiment
+    (then the best model of the best seed of its latest run is used)."""
     path = Path(init_from)
     if path.suffix == ".zip" or path.exists():
         if not path.exists():
             raise FileNotFoundError(path)
         return path
-    from jetfighter_rl.training.train import best_model_of  # import tardif (évite un cycle)
+    from jetfighter_rl.training.train import best_model_of  # deferred import (avoids a cycle)
 
     return best_model_of(init_from, runs_dir)

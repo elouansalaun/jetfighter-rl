@@ -1,34 +1,33 @@
-"""Environnement Gymnasium ``JetEnv`` : le F-16 (3-DOF ou 6-DOF) piloté par un agent RL.
+"""Gymnasium environment ``JetEnv``: the F-16 (3-DOF or 6-DOF) flown by an RL agent.
 
-Deux **modes d'action** (décision du 27/09/2026 : hiérarchique d'abord, bas niveau ensuite),
-toujours dans ``Box(−1, 1)`` :
+Two action modes ( hierarchical first, low-level second),
+always in ``Box(−1, 1)``:
 
-* ``"hierarchical"`` (défaut) — [n_z, taux de roulis, manette], exécutés par la boucle interne
-  (commandes de vol électriques en 6-DOF) ; même espace d'action pour les deux modèles.
-  0 sur l'axe de tangage = n_z qui **maintient la pente** (cos γ / cos μ : 1 g en palier,
-  2 g incliné à 60°) ; +1 = +9 g ; −1 = −3 g. Sans cette compensation, la politique
-  devait produire elle-même 1/cos μ au centième près pour ne pas monter ou descendre en
-  virage : PPO n'apprenait pas la tâche cap/altitude (``nz_neutral="one_g"`` pour
-  l'ancien comportement) ;
-* ``"low_level"`` — 6-DOF : [manette, δe, δa, δr] (gouvernes directes, sans limiteur) ;
-  3-DOF : [manette, α commandée, taux de roulis].
+* ``"hierarchical"`` (default) — [n_z, roll rate, throttle], executed by the inner loop
+  (fly-by-wire in 6-DOF); same action space for both models.
+  0 on the pitch axis = the n_z that holds the flight path (cos γ / cos μ: 1 g in level
+  flight, 2 g at 60° of bank); +1 = +9 g; −1 = −3 g. Without this compensation, the policy
+  had to output 1/cos μ itself to within a hundredth to avoid climbing or descending in a
+  turn: PPO did not learn the heading/altitude task (``nz_neutral="one_g"`` for the old
+  behavior);
+* ``"low_level"`` — 6-DOF: [throttle, δe, δa, δr] (direct control surfaces, no limiter);
+  3-DOF: [throttle, commanded α, roll rate].
 
-Fréquences : physique 100 Hz, boucle interne et surveillance de l'enveloppe 50 Hz,
-décision de l'agent 10 Hz (réglables dans ``EnvConfig``).
+Rates: physics 100 Hz, inner loop and envelope monitoring 50 Hz, agent decisions 10 Hz
+(adjustable in ``EnvConfig``).
 
-Observations (``Box(−10, 10)``, float32) : état propre normalisé (vitesse, altitude, pente,
-inclinaison et gîte en sin/cos, α, β, p, q, r, n_z, Ps, puissance), dernière action, puis
-les grandeurs propres à la tâche (erreurs relatives à la consigne). Elles sont calculées à
-partir des **mesures** (capteurs éventuellement bruités) ; la récompense et les fins
-d'épisode utilisent les valeurs **vraies**.
+Observations (``Box(−10, 10)``, float32): normalized own state (speed, altitude, flight-path
+angle, bank and roll as sin/cos, α, β, p, q, r, n_z, Ps, power), last action, then the
+task-specific quantities (errors relative to the target). They are computed from the
+measurements (sensors, possibly noisy); the reward and episode terminations use the
+true values.
 
-Fin d'épisode : ``terminated`` si l'enveloppe est violée (crash, surcharge, décrochage…,
-pénalité ``task.crash_penalty`` plus le coût maximal des pas restants, dans la limite de
-l'horizon 1/(1−γ) de l'agent) ou si la tâche est
-accomplie (``task.done()`` : dernier point de passage franchi, figure de voltige
-terminée) ; ``truncated`` à la durée maximale de la tâche. En fin d'épisode, ``info``
-contient ``is_success`` (critère de la roadmap), ``metrics`` (temps de rétablissement,
-dépassements…) et ``episode_terms`` (récompense cumulée par terme).
+Episode end: ``terminated`` if the envelope is violated (crash, overload, stall…,
+penalty ``task.crash_penalty`` plus the maximum cost of the remaining steps, capped at the
+agent's 1/(1−γ) horizon) or if the task is complete (``task.done()``: last waypoint
+passed, aerobatic maneuver finished); ``truncated`` at the task's maximum duration. At the
+end of an episode, ``info`` contains ``is_success`` (roadmap criterion), ``metrics``
+(recovery time, overshoots…) and ``episode_terms`` (cumulative reward per term).
 
 Usage ::
 
@@ -68,8 +67,8 @@ from jetfighter_rl.envs.tasks import FlightGeometry, InitialCondition, Task, mak
 Vec = npt.NDArray[np.float64]
 DEG = math.pi / 180
 OBS_LIMIT = 10.0
-N_OWN_SHIP = 19  # grandeurs propres à l'avion dans l'observation
-REFERENCE_DT = 0.1  # [s] cadence de référence des récompenses par pas
+N_OWN_SHIP = 19  # aircraft own-state quantities in the observation
+REFERENCE_DT = 0.1  # [s] reference rate for per-step rewards
 
 
 @dataclass
@@ -77,37 +76,37 @@ class EnvConfig:
     task: str = "level"
     model: str = "3dof"  # "3dof" | "6dof"
     action_mode: str = "hierarchical"  # "hierarchical" | "low_level"
-    agent_dt: float = 0.1  # période de décision de l'agent [s]
-    control_dt: float = 0.02  # période de la boucle interne [s]
-    physics_dt: float = 0.01  # pas d'intégration [s]
-    episode_time: float | None = None  # None : durée de la tâche
-    sensors: str | None = None  # None (parfaits), "realistic" ou chemin d'un YAML
-    xcg: float | None = None  # centrage 6-DOF (None : valeur du YAML)
-    max_roll_rate: float = 180 * DEG  # taux de roulis max demandable (mode hiérarchique)
-    action_exponent: float = 1.0  # courbe « expo » de n_z et du roulis (1 : linéaire)
-    attitude_features: str = "gravity"  # "gravity" (continu) | "euler" (singulier à la verticale)
-    nz_neutral: str = "compensated"  # n_z à action nulle : "compensated" (cos γ/cos μ) | "one_g"
-    record: bool = False  # enregistre les vols (cf. ``JetEnv.recording``)
-    discount: float = 0.99  # γ de l'agent : fixe l'horizon couvert par la pénalité de crash
+    agent_dt: float = 0.1  # agent decision period [s]
+    control_dt: float = 0.02  # inner loop period [s]
+    physics_dt: float = 0.01  # integration step [s]
+    episode_time: float | None = None  # None: the task's duration
+    sensors: str | None = None  # None (perfect), "realistic" or path to a YAML
+    xcg: float | None = None  # 6-DOF CG position (None: value from the YAML)
+    max_roll_rate: float = 180 * DEG  # max commandable roll rate (hierarchical mode)
+    action_exponent: float = 1.0  # "expo" curve for n_z and roll (1: linear)
+    attitude_features: str = "gravity"  # "gravity" (continuous) | "euler" (singular when vertical)
+    nz_neutral: str = "compensated"  # n_z at zero action: "compensated" (cos γ/cos μ) | "one_g"
+    record: bool = False  # records the flights (cf. ``JetEnv.recording``)
+    discount: float = 0.99  # agent's γ: sets the horizon covered by the crash penalty
     task_kwargs: dict[str, Any] = field(default_factory=dict)
 
 
 # --------------------------------------------------------------------------
-# Correspondance action normalisée <-> commande physique
+# Normalized action <-> physical command mapping
 # --------------------------------------------------------------------------
 NZ_MAX, NZ_MIN = 9.0, -3.0
 
 
 # --------------------------------------------------------------------------
-# Bas niveau (étape 8.6) : plus de commandes de vol pour protéger la structure
+# Low-level (step 8.6): no more fly-by-wire to protect the structure
 # --------------------------------------------------------------------------
 LIMIT_WEIGHTS = {"overload": 0.5, "sideslip": 0.2}
-NZ_WARN_HIGH, NZ_WARN_LOW = 8.0, -2.0  # début de la pénalité (limites structurales : +10/−4 g)
+NZ_WARN_HIGH, NZ_WARN_LOW = 8.0, -2.0  # penalty onset (structural limits: +10/−4 g)
 
 
 def limit_terms(ins: Instruments) -> dict[str, float]:
-    """Pénalités propres au mode bas niveau : approche des limites structurales et
-    dérapage (plus aucun limiteur ni amortisseur de lacet ne s'en charge)."""
+    """Penalties specific to low-level mode: approaching the structural limits and
+    sideslip (no limiter or yaw damper takes care of them anymore)."""
     over = max(ins.nz - NZ_WARN_HIGH, NZ_WARN_LOW - ins.nz, 0.0)
     return {
         "overload": -LIMIT_WEIGHTS["overload"] * min(over / 2.0, 1.0),
@@ -120,11 +119,11 @@ def _expo(x: float, exponent: float) -> float:
 
 
 def gravity_compensation(gamma: float, bank: float) -> float:
-    """Facteur de charge qui maintient la pente en virage : cos γ / cos μ.
+    """Load factor that holds the flight path in a turn: cos γ / cos μ.
 
-    |cos μ| est borné à 0.25 (compensation d'au plus 4 g) ; sur le dos (|μ| > 90°), la
-    compensation est négative (on « pousse » pour tenir la trajectoire). Le résultat est
-    borné à [−2, 4] g, strictement dans la plage des commandes.
+    |cos μ| is bounded below by 0.25 (compensation of at most 4 g); inverted (|μ| > 90°),
+    the compensation is negative (you "push" to hold the flight path). The result is
+    clipped to [−2, 4] g, strictly within the command range.
     """
     c = math.cos(bank)
     c = math.copysign(max(abs(c), 0.25), c)
@@ -134,18 +133,16 @@ def gravity_compensation(gamma: float, bank: float) -> float:
 def action_to_command(
     a: Vec, max_roll_rate: float, exponent: float = 1.0, nz_bias: float = 1.0
 ) -> HighLevelCommand:
-    """Action hiérarchique [−1, 1]³ -> (n_z, taux de roulis, manette).
+    """Hierarchical action [−1, 1]³ -> (n_z, roll rate, throttle).
 
-    ``nz_bias`` est le facteur de charge commandé quand a₀ = 0 : 1 g (mode ``"one_g"``) ou
-    la compensation de pesanteur cos γ / cos μ (mode ``"compensated"``, par défaut dans
-    l'environnement : action nulle = trajectoire maintenue, même incliné). a₀ = ±1 donne
-    toujours +9 / −3 g.
+    ``nz_bias`` is the load factor commanded when a₀ = 0: 1 g (``"one_g"`` mode) or the
+    gravity compensation cos γ / cos μ (``"compensated"`` mode, the environment's default:
+    zero action = flight path held, even when banked). a₀ = ±1 always gives +9 / −3 g.
 
-    Option ``exponent`` > 1 : courbe « expo » (|a|^exposant, comme sur les radiocommandes)
-    sur le facteur de charge et le roulis, plus fine autour du neutre. Essayée avec 3 : pas
-    de gain mesurable pour PPO, et l'imitation du pilote automatique devient bien moins
-    précise (la réciproque, en racine cubique, est très raide près de zéro) ; linéaire par
-    défaut.
+    Option ``exponent`` > 1: "expo" curve (|a|^exponent, as on RC transmitters) on the
+    load factor and roll, finer around neutral. Tried with 3: no measurable gain for PPO,
+    and imitating the autopilot becomes much less accurate (the inverse, a cube root, is
+    very steep near zero); linear by default.
     """
     a0 = _expo(float(a[0]), exponent)
     nz = nz_bias + a0 * ((NZ_MAX - nz_bias) if a0 >= 0 else (nz_bias - NZ_MIN))
@@ -156,7 +153,7 @@ def action_to_command(
 def command_to_action(
     cmd: HighLevelCommand, max_roll_rate: float, exponent: float = 1.0, nz_bias: float = 1.0
 ) -> Vec:
-    """Inverse de ``action_to_command`` (saturée dans [−1, 1])."""
+    """Inverse of ``action_to_command`` (clipped to [−1, 1])."""
     dn = cmd.nz - nz_bias
     a0 = dn / (NZ_MAX - nz_bias) if dn >= 0 else dn / (nz_bias - NZ_MIN)
     a1 = cmd.roll_rate / max_roll_rate
@@ -167,7 +164,7 @@ def command_to_action(
 
 
 class JetEnv(gym.Env[npt.NDArray[np.float32], npt.NDArray[np.float32]]):
-    """Environnement d'apprentissage (voir le module)."""
+    """Learning environment (see the module)."""
 
     metadata = {"render_modes": ["ansi"], "render_fps": 10}  # noqa: RUF012  (API Gymnasium)
 
@@ -180,13 +177,13 @@ class JetEnv(gym.Env[npt.NDArray[np.float32], npt.NDArray[np.float32]]):
         super().__init__()
         cfg = replace(config or EnvConfig(), **overrides)
         if cfg.model not in ("3dof", "6dof"):
-            raise ValueError("model doit valoir '3dof' ou '6dof'.")
+            raise ValueError("model must be '3dof' or '6dof'.")
         if cfg.attitude_features not in ("gravity", "euler"):
-            raise ValueError("attitude_features doit valoir 'gravity' ou 'euler'.")
+            raise ValueError("attitude_features must be 'gravity' or 'euler'.")
         if cfg.nz_neutral not in ("compensated", "one_g"):
-            raise ValueError("nz_neutral doit valoir 'compensated' ou 'one_g'.")
+            raise ValueError("nz_neutral must be 'compensated' or 'one_g'.")
         if cfg.action_mode not in ("hierarchical", "low_level"):
-            raise ValueError("action_mode doit valoir 'hierarchical' ou 'low_level'.")
+            raise ValueError("action_mode must be 'hierarchical' or 'low_level'.")
         self.cfg = cfg
         self.render_mode = render_mode
         self.six_dof = cfg.model == "6dof"
@@ -206,15 +203,15 @@ class JetEnv(gym.Env[npt.NDArray[np.float32], npt.NDArray[np.float32]]):
         self.n_physics = round(cfg.control_dt / cfg.physics_dt)
         if not (math.isclose(self.n_control * cfg.control_dt, cfg.agent_dt)
                 and math.isclose(self.n_physics * cfg.physics_dt, cfg.control_dt)):  # fmt: skip
-            raise ValueError("agent_dt, control_dt et physics_dt doivent être multiples.")
+            raise ValueError("agent_dt, control_dt and physics_dt must be multiples of each other.")
         self.episode_time = cfg.episode_time or self.task.episode_time
 
         n_act = 3 if (self.hierarchical or not self.six_dof) else 4
         self.action_space = spaces.Box(-1.0, 1.0, shape=(n_act,), dtype=np.float32)
-        # bas niveau 6-DOF : position réelle des gouvernes (δe, δa, δr) dans l'observation
+        # 6-DOF low-level: actual control surface positions (δe, δa, δr) in the observation
         self.n_surfaces = 3 if (self.six_dof and not self.hierarchical) else 0
-        # coûts par pas mis à l'échelle de la cadence : les rendements restent comparables
-        # entre un agent à 10 Hz (hiérarchique) et un agent à 50 Hz (gouvernes directes)
+        # per-step costs scaled to the rate: returns stay comparable between a 10 Hz agent
+        # (hierarchical) and a 50 Hz agent (direct control surfaces)
         self.reward_scale = cfg.agent_dt / REFERENCE_DT
         self.limit_cost = LIMIT_WEIGHTS["overload"] + LIMIT_WEIGHTS["sideslip"]
         if self.hierarchical:
@@ -244,13 +241,13 @@ class JetEnv(gym.Env[npt.NDArray[np.float32], npt.NDArray[np.float32]]):
         return SensorSuite.from_yaml(path)
 
     def _initial_state(self, ic: InitialCondition) -> tuple[Vec, Vec]:
-        """État initial à partir de conditions initiales.
+        """Initial state from initial conditions.
 
-        On part de l'équilibre à la pente γ demandée ; s'il n'existe pas (piqué trop raide :
-        l'avion accélère même au ralenti), de l'équilibre en palier, auquel on impose ensuite
-        la pente, l'inclinaison et le taux de roulis. L'état de départ n'est alors pas un
-        équilibre, ce qui est voulu pour les tâches de rattrapage.
-        Lève ``TrimError`` si même le palier est impossible (vitesse hors enveloppe).
+        Starts from trim at the requested flight-path angle γ; if there is none (dive too
+        steep: the aircraft accelerates even at idle), from level trim, onto which the
+        flight-path angle, bank and roll rate are then imposed. The starting state is then
+        not a trim point, which is intended for the recovery tasks.
+        Raises ``TrimError`` if even level trim is impossible (speed outside the envelope).
         """
         if isinstance(self.model, d6.F16SixDof):
             try:
@@ -273,7 +270,7 @@ class JetEnv(gym.Env[npt.NDArray[np.float32], npt.NDArray[np.float32]]):
         return x, np.array([power, alpha, 0.0])
 
     # ------------------------------------------------------------------
-    # API Gymnasium
+    # Gymnasium API
     # ------------------------------------------------------------------
     def reset(
         self, *, seed: int | None = None, options: dict[str, Any] | None = None
@@ -289,8 +286,8 @@ class JetEnv(gym.Env[npt.NDArray[np.float32], npt.NDArray[np.float32]]):
             except (d3.TrimError, d6.TrimError):
                 if "initial_condition" in options:
                     raise
-        else:  # pragma: no cover - pratiquement impossible avec les plages des tâches
-            raise RuntimeError("Impossible de trouver un état initial équilibré.")
+        else:  # pragma: no cover - practically impossible with the tasks' ranges
+            raise RuntimeError("Could not find a trimmed initial state.")
 
         self.t = 0.0
         self.inner.reset(self.x)
@@ -313,7 +310,7 @@ class JetEnv(gym.Env[npt.NDArray[np.float32], npt.NDArray[np.float32]]):
         self, action: npt.NDArray[np.float32]
     ) -> tuple[npt.NDArray[np.float32], float, bool, bool, dict[str, Any]]:
         if self.instruments is None:
-            raise RuntimeError("Appeler reset() avant step().")
+            raise RuntimeError("Call reset() before step().")
         a = np.clip(np.asarray(action, dtype=np.float64), -1.0, 1.0)
         u_direct = np.zeros(0) if self.hierarchical else self._low_level_controls(a)
 
@@ -350,9 +347,9 @@ class JetEnv(gym.Env[npt.NDArray[np.float32], npt.NDArray[np.float32]]):
         crashed = violation is not None
         terminated = crashed or self.task.done()
         if crashed:
-            # pénalité fixe + coût maximal des pas restants (limités à l'horizon 1/(1−γ) de
-            # l'agent) : s'écraser est toujours pire que de continuer à voler, même mal
-            # (sinon, loin de la consigne, l'agent apprendrait à abréger l'épisode)
+            # fixed penalty + maximum cost of the remaining steps (capped at the agent's 1/(1−γ)
+            # horizon): crashing is always worse than continuing to fly, even badly
+            # (otherwise, far from the target, the agent would learn to cut the episode short)
             remaining = max(self.episode_time - self.t, 0.0) / self.cfg.agent_dt
             horizon = 1.0 / max(1.0 - self.cfg.discount, 1e-3)
             step_cost = (self.task.max_step_cost + self.limit_cost) * self.reward_scale
@@ -387,7 +384,7 @@ class JetEnv(gym.Env[npt.NDArray[np.float32], npt.NDArray[np.float32]]):
                 f"n={i.nz:+5.2f}g α={math.degrees(i.alpha):+5.1f}°")  # fmt: skip
 
     # ------------------------------------------------------------------
-    # Aides
+    # Helpers
     # ------------------------------------------------------------------
     def _low_level_controls(self, a: Vec) -> Vec:
         throttle = 0.5 * (a[0] + 1.0)
@@ -401,19 +398,19 @@ class JetEnv(gym.Env[npt.NDArray[np.float32], npt.NDArray[np.float32]]):
 
     @property
     def has_reference(self) -> bool:
-        """Une politique de référence existe (hiérarchique, ou bas niveau 6-DOF)."""
+        """A reference policy exists (hierarchical, or 6-DOF low-level)."""
         return self.hierarchical or self.six_dof
 
     def controls_to_action(self, u: Vec) -> Vec:
-        """Inverse de ``_low_level_controls`` (6-DOF) : commande du modèle -> action."""
+        """Inverse of ``_low_level_controls`` (6-DOF): model command -> action."""
         cs = self.params.control_surfaces
         a = np.array([2.0 * u[0] - 1.0, u[1] / cs["elevator"].max, u[2] / cs["aileron"].max,
                       u[3] / cs["rudder"].max])  # fmt: skip
         return np.clip(a, -1.0, 1.0)
 
     def _neutral_action(self, u0: Vec) -> Vec:
-        """Action qui correspond à l'équilibre initial (évite une pénalité de lissage
-        artificielle au premier pas)."""
+        """Action matching the initial trim (avoids an artificial smoothness penalty on the
+        first step)."""
         if self.hierarchical:
             thr = float(u0[0])
             if isinstance(self.model, d6.F16SixDof):
@@ -428,7 +425,7 @@ class JetEnv(gym.Env[npt.NDArray[np.float32], npt.NDArray[np.float32]]):
         return np.zeros(self.n_act)
 
     def nz_bias(self, ins: Instruments) -> float:
-        """Facteur de charge commandé à action nulle (voir ``action_to_command``)."""
+        """Load factor commanded at zero action (see ``action_to_command``)."""
         if self.cfg.nz_neutral == "compensated":
             return gravity_compensation(ins.gamma, ins.bank)
         return 1.0
@@ -437,8 +434,8 @@ class JetEnv(gym.Env[npt.NDArray[np.float32], npt.NDArray[np.float32]]):
         assert self.instruments is not None
         m = self.sensors.measure(self.instruments)
         if self.cfg.attitude_features == "gravity":
-            # direction de la pesanteur en axes vent puis corps : continue à toute attitude
-            # (les angles d'Euler basculent de 180° au passage de la verticale)
+            # gravity direction in wind then body axes: continuous at any attitude
+            # (Euler angles flip by 180° when passing through the vertical)
             cg, cp = math.cos(m.gamma), math.cos(m.pitch)
             attitude = [-math.sin(m.gamma), math.sin(m.bank) * cg, math.cos(m.bank) * cg,
                         -math.sin(m.pitch), math.sin(m.roll) * cp, math.cos(m.roll) * cp,
@@ -462,7 +459,7 @@ class JetEnv(gym.Env[npt.NDArray[np.float32], npt.NDArray[np.float32]]):
             2.0 * m.power - 1.0,
             *last,
         ])  # fmt: skip
-        if len(own) < N_OWN_SHIP:  # même taille dans les deux modes
+        if len(own) < N_OWN_SHIP:  # same size in both modes
             own = np.concatenate([own, np.zeros(N_OWN_SHIP - len(own))])
         parts = [own, self.previous_action]
         if self.n_surfaces:
@@ -474,9 +471,9 @@ class JetEnv(gym.Env[npt.NDArray[np.float32], npt.NDArray[np.float32]]):
         return np.clip(np.nan_to_num(obs), -OBS_LIMIT, OBS_LIMIT).astype(np.float32)
 
     def geometry(self) -> FlightGeometry:
-        """Position et repère vent vrais (pour les tâches de navigation et de voltige)."""
+        """True position and wind frame (for the navigation and aerobatics tasks)."""
         return FlightGeometry(position_ned(self.model, self.x), wind_axes(self.model, self.x))
 
     def recording(self) -> FlightRecording | None:
-        """Enregistrement du dernier épisode terminé (si ``record=True``)."""
+        """Recording of the last finished episode (if ``record=True``)."""
         return self._last_recording

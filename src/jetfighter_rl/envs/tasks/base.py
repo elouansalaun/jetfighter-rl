@@ -1,24 +1,24 @@
-"""Interface commune des tâches d'apprentissage.
+"""Common interface of the learning tasks.
 
-Une tâche dit **quoi** apprendre ; l'environnement (``jet_env.py``) dit **comment** l'avion
-vole. Cycle de vie d'un épisode, vu de la tâche ::
+A task says **what** to learn; the environment (``jet_env.py``) says **how** the aircraft
+flies. Lifecycle of an episode, seen from the task ::
 
-    ic = task.sample_initial(rng, six_dof)        # conditions initiales
-    task.reset(ins, geo, rng, six_dof)            # consignes de l'épisode
-    boucle :
-        features = task.features(mesures)         # observations propres à la tâche
-        ... l'agent agit, l'avion vole pendant agent_dt ...
-        task.update(ins, geo, t)                  # suivi (chronos, progression, waypoints…)
-        terms = task.reward(ins, action, action_précédente)
-        fin si task.done() (tâche accomplie) ou sortie d'enveloppe ou durée maximale
-    info["is_success"] = task.episode_success(ins) ; info["metrics"] = task.metrics()
+    ic = task.sample_initial(rng, six_dof)        # initial conditions
+    task.reset(ins, geo, rng, six_dof)            # episode setpoints
+    loop:
+        features = task.features(measurements)    # task-specific observations
+        ... the agent acts, the aircraft flies for agent_dt ...
+        task.update(ins, geo, t)                  # tracking (timers, progress, waypoints…)
+        terms = task.reward(ins, action, previous_action)
+        end if task.done() (task complete) or envelope exit or maximum duration
+    info["is_success"] = task.episode_success(ins); info["metrics"] = task.metrics()
 
-``ins`` : instruments **vrais** ; ``geo`` : position et repère vent (sans singularité),
-vrais également. Seul ``features`` reçoit les **mesures** (capteurs éventuellement bruités).
+``ins``: **true** instruments; ``geo``: position and wind frame (singularity-free), also
+true. Only ``features`` receives the **measurements** (sensors, possibly noisy).
 
-La politique de référence (``baselines.AutopilotPolicy``) appelle ``baseline_command`` :
-par défaut, le pilote automatique de la phase 6 avec les consignes ``autopilot_targets`` ;
-les tâches de voltige la remplacent par un pilote scripté.
+The reference policy (``baselines.AutopilotPolicy``) calls ``baseline_command``: by
+default, the phase 6 autopilot with the ``autopilot_targets`` setpoints; the aerobatics
+tasks replace it with a scripted pilot.
 """
 
 from __future__ import annotations
@@ -42,18 +42,18 @@ DEG = math.pi / 180
 class InitialCondition:
     altitude: float  # [m]
     airspeed: float  # [m/s]
-    heading: float = 0.0  # route χ [rad]
-    gamma: float = 0.0  # pente [rad]
-    bank: float = 0.0  # inclinaison μ [rad]
+    heading: float = 0.0  # course χ [rad]
+    gamma: float = 0.0  # flight-path angle [rad]
+    bank: float = 0.0  # bank μ [rad]
     roll_rate: float = 0.0  # [rad/s]
 
 
 @dataclass(frozen=True)
 class FlightGeometry:
-    """Position et orientation du repère vent, sans singularité (cf. ``wind_axes``)."""
+    """Position and orientation of the wind frame, singularity-free (cf. ``wind_axes``)."""
 
-    position: Vec  # [nord, est, bas] [m]
-    c_nw: Vec  # repère vent -> NED
+    position: Vec  # [north, east, down] [m]
+    c_nw: Vec  # wind frame -> NED
 
     @property
     def velocity_dir(self) -> Vec:
@@ -69,20 +69,20 @@ class FlightGeometry:
 
 
 class Task:
-    """Interface commune des tâches (voir le module)."""
+    """Common task interface (see the module)."""
 
     name: str = "task"
-    episode_time: float = 30.0  # durée max d'un épisode [s]
+    episode_time: float = 30.0  # max episode duration [s]
     crash_penalty: float = -50.0
     n_features: int = 0
-    # termes ponctuels (bonus, progression) : indépendants de la cadence de l'agent ; les
-    # autres sont des coûts par pas, mis à l'échelle agent_dt / 0.1 s par l'environnement
+    # one-off terms (bonuses, progress): independent of the agent's rate; the others are
+    # per-step costs, scaled by agent_dt / 0.1 s by the environment
     event_terms: frozenset[str] = frozenset({"progress", "waypoint"})
 
     @property
     def max_step_cost(self) -> float:
-        """Borne du coût par pas (somme des poids des termes négatifs). Sert à rendre la
-        pénalité de crash toujours pire que de continuer à voler (voir ``JetEnv.step``)."""
+        """Bound on the per-step cost (sum of the weights of the negative terms). Used to make
+        the crash penalty always worse than continuing to fly (see ``JetEnv.step``)."""
         return 1.0
 
     def sample_initial(self, rng: np.random.Generator, six_dof: bool) -> InitialCondition:
@@ -91,10 +91,10 @@ class Task:
     def reset(
         self, ins: Instruments, geo: FlightGeometry, rng: np.random.Generator, six_dof: bool
     ) -> None:
-        """Tire les consignes de l'épisode (après construction de l'état initial)."""
+        """Draws the episode setpoints (after the initial state is built)."""
 
     def update(self, ins: Instruments, geo: FlightGeometry, t: float) -> None:
-        """Suivi interne après chaque pas de l'agent (avant ``reward``)."""
+        """Internal tracking after each agent step (before ``reward``)."""
 
     def features(self, ins: Instruments) -> Vec:
         return np.zeros(0)
@@ -103,19 +103,19 @@ class Task:
         raise NotImplementedError
 
     def success(self, ins: Instruments) -> bool:
-        """L'avion est-il dans la tolérance à cet instant ?"""
+        """Is the aircraft within tolerance at this instant?"""
         raise NotImplementedError
 
     def done(self) -> bool:
-        """Tâche accomplie : l'épisode se termine (``terminated``) sans pénalité."""
+        """Task complete: the episode ends (``terminated``) without penalty."""
         return False
 
     def episode_success(self, ins: Instruments) -> bool:
-        """Critère de réussite de l'épisode (roadmap, phase 8), évalué à la fin."""
+        """Episode success criterion (roadmap, phase 8), evaluated at the end."""
         return self.success(ins)
 
     def metrics(self) -> dict[str, float]:
-        """Mesures de fin d'épisode (temps de rétablissement, dépassement…)."""
+        """End-of-episode measurements (recovery time, overshoot…)."""
         return {}
 
     def autopilot_targets(self, ins: Instruments) -> AutopilotTargets:
@@ -124,12 +124,12 @@ class Task:
     def baseline_command(
         self, ins: Instruments, autopilot: Autopilot, dt: float
     ) -> HighLevelCommand:
-        """Commande de la politique de référence (pilote automatique par défaut)."""
+        """Command of the reference policy (autopilot by default)."""
         autopilot.targets = self.autopilot_targets(ins)
         return autopilot.high_level(ins, dt)
 
     def describe(self) -> dict[str, float]:
-        """Consignes de l'épisode (pour les journaux)."""
+        """Episode setpoints (for the logs)."""
         return {}
 
 

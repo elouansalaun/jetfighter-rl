@@ -1,7 +1,7 @@
-# 8.5 — Voltige : looping, tonneau, Immelmann, Split-S (une seule politique, figure tirée
-# au hasard et indiquée dans l'observation). Critère : figure complète puis ailes à plat.
+# 8.5 — Aerobatics: loop, roll, Immelmann, Split-S (a single policy, maneuver drawn
+# at random and given in the observation). Criterion: complete maneuver, then wings level.
 name: 8_5_aerobatics
-description: Looping, tonneau, Immelmann et Split-S (3-DOF, hiérarchique)
+description: Loop, roll, Immelmann and Split-S (3-DOF, hierarchical)
 env:
   task: aerobatics
   model: 3dof
@@ -16,10 +16,10 @@ hyperparams:
   n_steps: 1024
   batch_size: 1024
   learning_rate: 3.0e-4
-  lr_final: 3.0e-5   # décroissance linéaire : fin d'entraînement plus stable (cf. 8.2)
+  lr_final: 3.0e-5   # linear decay: more stable end of training (cf. 8.2)
   gamma: 0.995
   policy_kwargs: {net_arch: [256, 256]}
 eval: {freq: 250000, episodes: 20}
-init_from: null   # réseau plus grand (256×256) : le transfert depuis 8.1 ne copiait presque rien
-# Option : partir d'une imitation de la référence (pilote auto / pilote scripté), puis RL.
+init_from: null   # larger network (256×256): transfer from 8.1 copied almost nothing
+# Option: start from an imitation of the reference (autopilot / scripted pilot), then RL.
 # pretrain: {episodes: 40, noise: 0.1, epochs: 30, critic_warmup: 5}

@@ -1,9 +1,9 @@
-"""Évaluation d'un agent entraîné : comparaison à la référence, vols Tacview, tracés.
+"""Evaluation of a trained agent: comparison with the reference, Tacview flights, plots.
 
-Bonne pratique de la roadmap : **toujours regarder les trajectoires**, pas seulement la
-courbe de récompense. ``export_side_by_side`` met dans le même fichier Tacview le vol de
-l'agent (bleu) et celui du pilote automatique (orange) sur la même graine, avec les
-points de passage éventuels ; ``plot_comparison`` trace leurs séries temporelles.
+Roadmap good practice: always look at the trajectories, not just the reward curve.
+``export_side_by_side`` puts the agent's flight (blue) and the autopilot's (orange) on the
+same seed into the same Tacview file, with the waypoints if any; ``plot_comparison``
+plots their time series.
 """
 
 from __future__ import annotations
@@ -30,8 +30,8 @@ DEG = 180.0 / math.pi
 
 
 def env_config_for(model_path: str | Path, **overrides: Any) -> EnvConfig:
-    """Configuration d'environnement de l'exécution qui a produit le modèle (surchargeable,
-    par exemple ``model="6dof"`` pour tester un agent 3-DOF sur le 6-DOF)."""
+    """Environment configuration of the run that produced the model (can be overridden,
+    e.g. ``model="6dof"`` to test a 3-DOF agent on the 6-DOF)."""
     cfg = run_config_of(model_path)
     base = cfg.env_config() if cfg else EnvConfig()
     return replace(base, **{k: v for k, v in overrides.items() if v is not None})
@@ -43,22 +43,22 @@ def compare(
     episodes: int = 20,
     seed: int = EVAL_SEED,
 ) -> dict[str, Evaluation]:
-    """Agent, référence (si mode hiérarchique) et politique aléatoire, mêmes graines."""
+    """Agent, reference (if hierarchical mode) and random policy, same seeds."""
     env_config = env_config or env_config_for(model_path)
     env = JetEnv(env_config)
     agent = AgentPolicy(load_model(model_path))
     out = {"agent": evaluate(env, agent, episodes=episodes, seed=seed)}
     if env.has_reference:
-        out["référence"] = evaluate(env, reference_policy(env), episodes=episodes, seed=seed)
-    out["aléatoire"] = evaluate(env, RandomPolicy(env), episodes=episodes, seed=seed)
+        out["reference"] = evaluate(env, reference_policy(env), episodes=episodes, seed=seed)
+    out["random"] = evaluate(env, RandomPolicy(env), episodes=episodes, seed=seed)
     return out
 
 
 def fly(
     env_config: EnvConfig, policy: Any | None, seed: int
 ) -> tuple[FlightRecording, dict[str, Any]]:
-    """Un épisode enregistré (``policy=None`` : pilote automatique de référence) ;
-    renvoie l'enregistrement et l'``info`` de fin."""
+    """One recorded episode (``policy=None``: reference autopilot);
+    returns the recording and the final ``info``."""
     env = JetEnv(replace(env_config, record=True))
     obs, _ = env.reset(seed=seed)
     if policy is None:
@@ -86,8 +86,8 @@ def export_side_by_side(
     agent = AgentPolicy(load_model(model_path))
     flights = {"Agent RL": fly(env_config, agent, seed)}
     if JetEnv(env_config).has_reference:
-        flights["Pilote auto"] = fly(env_config, None, seed)
-    writer = AcmiWriter(title=f"{env_config.task} — agent vs référence (graine {seed})")
+        flights["Autopilot"] = fly(env_config, None, seed)
+    writer = AcmiWriter(title=f"{env_config.task} — agent vs reference (seed {seed})")
     waypoints = flights["Agent RL"][1]["waypoints"]
     if waypoints:
         add_waypoints(writer, waypoints)
@@ -100,15 +100,15 @@ def export_side_by_side(
 
 
 def plot_comparison(recordings: dict[str, FlightRecording], title: str = "") -> Figure:
-    """Altitude, vitesse, inclinaison, facteur de charge, incidence et trace au sol."""
+    """Altitude, speed, bank, load factor, angle of attack and ground track."""
     apply_style()
     fig, axes = plt.subplots(3, 2, figsize=(11, 8.5), constrained_layout=True)
     panels = [
         ("altitude", 1.0, "altitude [m]"),
-        ("tas", 1.0, "vitesse vraie [m/s]"),
-        ("bank", DEG, "inclinaison μ [°]"),
-        ("nz", 1.0, "facteur de charge [g]"),
-        ("alpha", DEG, "incidence α [°]"),
+        ("tas", 1.0, "true airspeed [m/s]"),
+        ("bank", DEG, "bank μ [°]"),
+        ("nz", 1.0, "load factor [g]"),
+        ("alpha", DEG, "angle of attack α [°]"),
     ]
     for ax, (key, scale, label) in zip(axes.flat, panels, strict=False):
         for k, (name, rec) in enumerate(recordings.items()):
@@ -123,8 +123,8 @@ def plot_comparison(recordings: dict[str, FlightRecording], title: str = "") -> 
             color=SERIES[k],
             label=name,
         )
-    ax.set_xlabel("est [km]")
-    ax.set_ylabel("nord [km]")
+    ax.set_xlabel("east [km]")
+    ax.set_ylabel("north [km]")
     ax.set_aspect("equal", adjustable="datalim")
     axes.flat[0].legend()
     if title:
@@ -139,7 +139,7 @@ def format_comparison(results: dict[str, Evaluation]) -> str:
     metric_names = sorted({k for ev in results.values() for k in ev.metrics})
     if metric_names:
         header = "  " + " " * 12 + "".join(f"{m[:22]:>24s}" for m in metric_names)
-        lines.append("\n  Métriques de tâche (moyennes)")
+        lines.append("\n  Task metrics (means)")
         lines.append(header)
         for label, ev in results.items():
             row = "".join(f"{ev.metrics.get(m, float('nan')):24.2f}" for m in metric_names)

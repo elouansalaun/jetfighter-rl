@@ -1,12 +1,12 @@
-"""Callbacks stable-baselines3 : journalisation détaillée et évaluation périodique.
+"""stable-baselines3 callbacks: detailed logging and periodic evaluation.
 
-* ``EpisodeStatsCallback`` : à chaque fin de collecte, moyenne sur les épisodes terminés
-  de chaque **terme de récompense** (``terms/…``), des **métriques de tâche**
-  (``metrics/…``), du taux de succès et de crash (``episode/…``). C'est ce qui permet de
-  voir dans TensorBoard *quel* terme l'agent optimise (et de repérer le *reward hacking*).
-* ``EvalCallback`` : toutes les ``freq`` étapes, évaluation déterministe sur des graines
-  fixes, comparée à la politique de référence (pilote automatique) évaluée une fois au
-  début sur les mêmes graines ; sauvegarde du meilleur modèle et d'un CSV d'historique.
+* ``EpisodeStatsCallback``: at the end of each rollout, mean over the finished episodes
+  of each reward term (``terms/…``), of the task metrics (``metrics/…``), and of
+  the success and crash rates (``episode/…``). This shows in TensorBoard *which* term the
+  agent optimizes (and helps spot reward hacking).
+* ``EvalCallback``: every ``freq`` steps, deterministic evaluation on fixed seeds, compared
+  with the reference policy (autopilot) evaluated once at the start on the same seeds;
+  saves the best model and a CSV history.
 """
 
 from __future__ import annotations
@@ -24,11 +24,11 @@ from stable_baselines3.common.callbacks import BaseCallback
 from jetfighter_rl.envs.baselines import Evaluation, RandomPolicy, evaluate, reference_policy
 from jetfighter_rl.envs.jet_env import EnvConfig, JetEnv
 
-EVAL_SEED = 10_000  # graines d'évaluation, disjointes de celles de l'entraînement
+EVAL_SEED = 10_000  # evaluation seeds, disjoint from the training ones
 
 
 class AgentPolicy:
-    """Politique déterministe d'un modèle stable-baselines3 (interface de ``evaluate``)."""
+    """Deterministic policy of a stable-baselines3 model (``evaluate`` interface)."""
 
     def __init__(self, model: BaseAlgorithm) -> None:
         self.model = model
@@ -65,12 +65,12 @@ class EpisodeStatsCallback(BaseCallback):
 
 
 class CriticWarmupCallback(BaseCallback):
-    """Gèle la politique pendant les ``n_rollouts`` premières mises à jour (PPO).
+    """Freezes the policy during the first ``n_rollouts`` updates (PPO).
 
-    Après une imitation, la politique est bonne mais la fonction de valeur n'a rien
-    appris : les premiers avantages estimés sont du bruit, et PPO dégrade la politique
-    imitée (constaté : rendement 82 -> −28 en 50 000 pas). On laisse d'abord le critique
-    apprendre la valeur de la politique imitée.
+    After imitation, the policy is good but the value function has learned nothing: the
+    first estimated advantages are noise, and PPO degrades the imitated policy (observed:
+    return 82 -> −28 in 50,000 steps). The critic is first left to learn the value of the
+    imitated policy.
     """
 
     def __init__(self, n_rollouts: int = 5) -> None:
@@ -112,7 +112,7 @@ def evaluation_row(ev: Evaluation) -> dict[str, float]:
 
 
 class EvalCallback(BaseCallback):
-    """Évaluation périodique + référence + meilleur modèle (voir le module)."""
+    """Periodic evaluation + reference + best model (see the module)."""
 
     def __init__(
         self,
@@ -143,8 +143,8 @@ class EvalCallback(BaseCallback):
         self.random = self._evaluate(RandomPolicy(self.env, seed=0))
         if self.verbose:
             if self.baseline is not None:
-                print(f"    référence (pilote auto) : {self.baseline}")
-            print(f"    aléatoire               : {self.random}")
+                print(f"    reference (autopilot)   : {self.baseline}")
+            print(f"    random                  : {self.random}")
         self.run_evaluation()
 
     def _on_step(self) -> bool:
@@ -178,7 +178,7 @@ class EvalCallback(BaseCallback):
             self.model.save(self.out_dir / "best_model")
         self._write_csv()
         if self.verbose:
-            print(f"    {self.num_timesteps:>9} pas : {ev}")
+            print(f"    {self.num_timesteps:>9} steps: {ev}")
         return ev
 
     def _write_csv(self) -> None:

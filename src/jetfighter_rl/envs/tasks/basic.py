@@ -1,4 +1,4 @@
-"""Tâches 8.1 (stabilisation) et 8.2 (cap, altitude, vitesse)."""
+"""Tasks 8.1 (stabilization) and 8.2 (heading, altitude, speed)."""
 
 from __future__ import annotations
 
@@ -14,20 +14,20 @@ from jetfighter_rl.envs.tasks.base import DEG, FlightGeometry, InitialCondition,
 
 
 # --------------------------------------------------------------------------
-# 8.1 — Stabilisation
+# 8.1 — Stabilization
 # --------------------------------------------------------------------------
 @dataclass
 class LevelFlightTask(Task):
-    """Revenir en palier ailes horizontales depuis une attitude perturbée.
+    """Return to wings-level flight from a perturbed attitude.
 
-    La vitesse initiale doit être conservée (petit terme ``speed``) : sans lui, les
-    premiers agents entraînés rétablissaient très vite puis laissaient la vitesse décroître
-    indéfiniment, manette réduite (vu sur les trajectoires, pas sur la récompense).
+    The initial speed must be kept (small ``speed`` term): without it, the first trained
+    agents recovered very quickly, then let the speed decay indefinitely with the throttle
+    pulled back (seen on the trajectories, not on the reward).
 
-    Critère de la roadmap : **retour en palier en moins de 10 s**. Le temps de
-    rétablissement est l'instant où l'avion entre dans la tolérance (|μ| < 5°, |γ| < 2°)
-    pour y rester au moins ``hold_time`` secondes. Réussite : rétabli en moins de
-    ``max_recovery_time`` et toujours dans la tolérance à la fin de l'épisode.
+    Roadmap criterion: **back to level flight in under 10 s**. The recovery time is the
+    instant the aircraft enters the tolerance (|μ| < 5°, |γ| < 2°) and stays there for at
+    least ``hold_time`` seconds. Success: recovered in under ``max_recovery_time`` and still
+    within tolerance at the end of the episode.
     """
 
     name: str = "level"
@@ -98,30 +98,30 @@ class LevelFlightTask(Task):
         return self.recovery_time <= self.max_recovery_time and self.success(ins)
 
     def metrics(self) -> dict[str, float]:
-        # non rétabli : on reporte la durée de l'épisode (valeur finie pour TensorBoard)
+        # not recovered: report the episode duration (finite value for TensorBoard)
         rec = self.recovery_time if math.isfinite(self.recovery_time) else self.episode_time
         return {"recovery_time": rec}
 
     def autopilot_targets(self, ins: Instruments) -> AutopilotTargets:
-        # altitude = altitude courante -> vitesse verticale nulle -> pente nulle
+        # altitude = current altitude -> zero vertical speed -> zero flight-path angle
         return AutopilotTargets(altitude=ins.altitude, bank=0.0, airspeed=self.reference_speed)
 
 
 # --------------------------------------------------------------------------
-# 8.2 — Cap, altitude, vitesse
+# 8.2 — Heading, altitude, speed
 # --------------------------------------------------------------------------
 @dataclass
 class HeadingAltitudeTask(Task):
-    """Rejoindre un cap, une altitude et une vitesse tirés au hasard.
+    """Reach a randomly drawn heading, altitude and speed.
 
-    Récompense : coûts proportionnels aux erreurs (ce qu'on veut minimiser) **plus** un
-    terme de progression ΔΦ (réduction de l'erreur normalisée à chaque pas, *shaping*
-    potentiel). Sans ce dernier, l'effet d'une action sur le coût est minuscule à l'échelle
-    d'un pas : le premier agent entraîné n'avait rien appris en 300 000 pas.
+    Reward: costs proportional to the errors (what we want to minimize) **plus** a progress
+    term ΔΦ (reduction of the normalized error at each step, potential-based *shaping*).
+    Without the latter, the effect of an action on the cost is tiny at the scale of a
+    step: the first trained agent had learned nothing in 300,000 steps.
 
-    Critère de la roadmap : **erreur faible sans dépassement excessif**. Réussite : dans la
-    tolérance à la fin (30 m, 3°, 5 m/s, soit ≈ 2–5 % des changements demandés), avec un
-    dépassement d'altitude ≤ max(50 m, 10 % du changement) et de cap ≤ 5°.
+    Roadmap criterion: **small error without excessive overshoot**. Success: within
+    tolerance at the end (30 m, 3°, 5 m/s, i.e. ≈ 2–5 % of the requested changes), with an
+    altitude overshoot ≤ max(50 m, 10 % of the change) and a heading overshoot ≤ 5°.
     """
 
     name: str = "heading_altitude"
@@ -137,7 +137,7 @@ class HeadingAltitudeTask(Task):
     w_heading: float = 0.4
     w_speed: float = 0.2
     w_smooth: float = 0.1
-    w_progress: float = 20.0  # shaping : réduction de l'erreur normalisée
+    w_progress: float = 20.0  # shaping: reduction of the normalized error
     success_bonus: float = 0.2
     n_features: int = 4
     target_altitude: float = field(default=5000.0, init=False)
@@ -150,7 +150,7 @@ class HeadingAltitudeTask(Task):
 
     @property
     def max_step_cost(self) -> float:
-        # la progression peut être négative : on s'éloigne d'au plus ≈ 0.02 par pas
+        # progress can be negative: moving away by at most ≈ 0.02 per step
         return (
             self.w_altitude + self.w_heading + self.w_speed + self.w_smooth + 0.02 * self.w_progress
         )
@@ -178,19 +178,19 @@ class HeadingAltitudeTask(Task):
         self._potential = self.potential(ins)
 
     def errors(self, ins: Instruments) -> tuple[float, float, float]:
-        """(altitude, cap, vitesse) : consigne − mesure."""
+        """(altitude, heading, speed): setpoint − measurement."""
         return (self.target_altitude - ins.altitude,
                 angle_error(self.target_heading - ins.course),
                 self.target_speed - ins.tas)  # fmt: skip
 
     def potential(self, ins: Instruments) -> float:
-        """Φ = −(erreurs normalisées) : la récompense de progression est ΔΦ."""
+        """Φ = −(normalized errors): the progress reward is ΔΦ."""
         eh, echi, ev = self.errors(ins)
         return -(min(abs(eh) / 1000.0, 3.0) + abs(echi) / math.pi + min(abs(ev) / 50.0, 3.0))
 
     def update(self, ins: Instruments, geo: FlightGeometry, t: float) -> None:
         errors = self.errors(ins)
-        for k in range(2):  # dépassement = erreur de signe opposé à l'erreur initiale
+        for k in range(2):  # overshoot = error with the opposite sign to the initial error
             e0 = self._initial_errors[k]
             if e0 != 0.0:
                 self._overshoot[k] = max(self._overshoot[k], -math.copysign(1.0, e0) * errors[k])
