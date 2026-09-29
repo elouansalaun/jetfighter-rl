@@ -219,14 +219,6 @@ git clone https://github.com/elouansalaun/jetfighter-sim.git ../jetfighter-sim
 uv pip install -e ".[dev,rl]" && uv pip install -e ../jetfighter-sim
 ```
 
-## What's next
-
-- **Phase 9**: a generic proportional-navigation missile (burn-then-coast motor, seeker
-  field of view and gimbal limits, proximity fuze), in `jetsim`.
-- **Phase 10**: missile evasion by RL, first hierarchical then direct surface control, with a
-  survival map (launch range × aspect angle) against the scripted beam / drag / break-turn
-  tactics of `jetsim.control.maneuvers`.
-- Robustness: more seeds, regularization towards the imitated policy for 8.6.
 
 ## License
 

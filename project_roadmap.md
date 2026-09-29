@@ -189,53 +189,9 @@
 
 ---
 
-## Phase 9 — Missile model (generic and simplified)
+## Phase 9 — Possible extensions
 
-**Goal**: a plausible threat for training, built solely from textbook models. The parameters are **generic**, not those of a real missile.
-
--  3-DOF point-mass dynamics
--  Propulsion profile: short boost phase then ballistic flight (the missile **loses energy** to drag → this is what the aircraft will exploit)
--  Load factor limit (dependent on q̄: a slow missile maneuvers less)
--  **Proportional navigation** guidance (classic textbook): a_cmd = N · V_c · λ̇, N ≈ 3–5
--  Seeker: field of view and gimbal limit → loss of lock if exceeded
--  Proximity fuze: "hit" if distance < lethal radius, otherwise *miss distance* recorded
--  Self-destruct / end if speed < threshold or max time of flight
--  Tests: interception of a non-maneuvering target, of a target in a constant turn; check sensitivity to N
-
----
-
-## Phase 10 — Missile-evasion RL
-
-### 10.1 `EvasionEnv` environment
--  Randomized initial conditions: launch range, aspect angle, relative altitudes, speeds
--  **Observation** (two difficulty levels):
-  - *Full information*: missile relative position / velocity in the aircraft frame, range, closing speed, line-of-sight angles
-  - *Partial information* (more realistic): only warning azimuth / elevation + time since launch, possibly noisy
--  Episode end: hit (failure), missile out of energy or loss of lock (success), crash (failure)
-
-### 10.2 Reward
--  Large survival bonus / large hit penalty
--  *Shaping*: + miss distance, + missile speed loss, − excessive altitude loss, − envelope exit
--  Make sure shaping does not dominate the main objective
-
-### 10.3 Curriculum
-1. Slow, barely maneuvering missile, long-range launch
-2. Gradual increase: speed, load factor, N
-3. Shorter launch ranges, unfavorable aspects
-4. Switch from full to partial information
-5. Switch from 3-DOF to 6-DOF
-6. Switch from hierarchical to low-level mode (same approach as in 8.6)
-
-### 10.4 Evaluation
--  Survival rate on a fixed test bench (frozen seeds)
--  **Survival map**: heatmap of the survival rate as a function of (launch range × aspect angle), compared with the scripted heuristics of Phase 6 → the project's most telling result
--  Qualitative analysis of the learned strategies in Tacview (does the agent rediscover beaming or dragging?)
--  Hierarchical vs low-level agent comparison: does direct control bring a gain (maneuvers beyond the limiters) or only difficulty?
-
----
-
-## Phase 11 — Possible extensions
-
+- **Missile evasion**: learn ability to evade an anti-aircraft missile
 - **Robustness**: domain randomization (mass, aero coefficients ±10 %, sensor noise, wind)
 - **Multiple threats**: two missiles, staggered launches
 - **Higher fidelity**: plug in [JSBSim](https://github.com/JSBSim-Team/jsbsim) (F-16 model included) and compare with the in-house model
@@ -265,7 +221,7 @@
 3. **J3** : A PPO agent stabilizes the aircraft and reaches a heading / altitude (Phase 8.2) — ✅ reached on 2026-09-28 (3-DOF and 6-DOF)
 4. **J4** : A (hierarchical) agent performs a loop and a max-rate turn (Phase 8.5) — ✅ 2026-09-28 (loop: imitation then PPO; turn: PPO alone, 106 % of the reference)
 5. **J4b** : A **low-level** agent (direct control surfaces, 6-DOF) matches the hierarchical agent on tasks 8.1 → 8.5 (Phase 8.6) — 🟡 partial: 90–100 % success everywhere, 72–100 % of the hierarchical return
-6. **J5** : An agent evades a missile better than the scripted heuristics, backed by a survival map ; first hierarchical, then low-level (Phase 10)
+
 
 ---
 
