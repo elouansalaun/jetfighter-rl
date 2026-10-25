@@ -1,10 +1,5 @@
 """Evaluates a trained agent: comparison with the reference, Tacview flight, plots (phase 8).
 
-Usage:
-    python scripts/evaluate_agent.py runs/8_1_level/<date_time>/seed0/best_model.zip
-    python scripts/evaluate_agent.py <model.zip> --episodes 50 --model 6dof   # transfer
-    python scripts/evaluate_agent.py <model.zip> --task-kwargs maneuvers=loop
-
 Writes, next to the model: ``eval_<seed>.acmi`` (agent in blue, autopilot in orange,
 same initial conditions) and ``eval_<seed>.png``.
 """

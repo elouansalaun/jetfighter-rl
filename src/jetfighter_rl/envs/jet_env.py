@@ -28,12 +28,6 @@ agent's 1/(1−γ) horizon) or if the task is complete (``task.done()``: last wa
 passed, aerobatic maneuver finished); ``truncated`` at the task's maximum duration. At the
 end of an episode, ``info`` contains ``is_success`` (roadmap criterion), ``metrics``
 (recovery time, overshoots…) and ``episode_terms`` (cumulative reward per term).
-
-Usage ::
-
-    env = JetEnv(EnvConfig(task="heading_altitude", model="3dof"))
-    obs, info = env.reset(seed=0)
-    obs, reward, terminated, truncated, info = env.step(env.action_space.sample())
 """
 
 from __future__ import annotations

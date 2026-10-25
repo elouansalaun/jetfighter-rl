@@ -1,10 +1,5 @@
 """Runs the training stages of a curriculum described in YAML, one after the other (phase 8).
 
-Usage:
-    python scripts/run_curriculum.py configs/training/curriculum.yaml
-    python scripts/run_curriculum.py configs/training/curriculum.yaml --seeds 0 --from-stage 3
-    python scripts/run_curriculum.py configs/training/curriculum.yaml --dry-run
-
 Each stage reuses a file from ``configs/training/`` and can override its ``model``,
 ``action_mode``, ``init_from``, ``timesteps``, ``n_envs`` and ``name``. A 6-DOF stage is
 named by default after its configuration with the ``_6dof`` suffix.

@@ -1,14 +1,4 @@
 """Trains an agent from a YAML configuration (phase 8).
-
-Usage:
-    python scripts/train.py configs/training/8_1_level.yaml
-    python scripts/train.py configs/training/8_1_level.yaml --seeds 0 --timesteps 100000
-    python scripts/train.py configs/training/8_2_heading_altitude.yaml --model 6dof \\
-        --init-from 8_2_heading_altitude          # 3-DOF -> 6-DOF transfer
-    tensorboard --logdir runs                     # curves (detailed reward terms)
-
-Results in ``runs/<name>/<date_time>/`` (cf. ``jetfighter_rl.training.train``). Then evaluate
-with ``python scripts/evaluate_agent.py runs/<name>/<date_time>/seed0/best_model.zip``.
 """
 
 from __future__ import annotations

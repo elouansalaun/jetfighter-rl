@@ -20,11 +20,14 @@ htmlcov/
 /runs/
 /models/
 /outputs/
+/notebooks/
 *.npz
 results/runs/**/final_model.zip
 results/runs/**/tb_*/
+project_roadmap.md
 
 # OS / IDE
 .DS_Store
 .vscode/
 .idea/
+

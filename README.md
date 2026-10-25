@@ -1,6 +1,4 @@
 # jetfighter-rl
-
-[![tests](https://github.com/elouansalaun/jetfighter-rl/actions/workflows/tests.yml/badge.svg)](https://github.com/elouansalaun/jetfighter-rl/actions/workflows/tests.yml)
 ![python](https://img.shields.io/badge/python-3.10%20%7C%203.12-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
@@ -182,13 +180,12 @@ independent evaluations, the waypoint agent (3-DOF) and the direct-surface susta
 agent reached 100 % success over 10 episodes, and the direct-surface aerobatics agent 95 %
 over 20 episodes (one crash), slightly below its 100 % during training evaluation.
 
-## Notebooks
+## Phases
 
-| # | Notebook | Content |
+| # | Phase | Content |
 |---|---|---|
-| 0 | [Project overview](notebooks/00_project_overview.ipynb) | Goal, architecture, design decisions, results at a glance |
-| 7 | [Gymnasium environment](notebooks/07_gym_environment.ipynb) | Actions, observations, rewards, crash penalty, reference policies |
-| 8 | [RL maneuvers](notebooks/08_rl_maneuvers.ipynb) | PPO, live training, curriculum, reward hacking, imitation, transfer, direct surface control |
+| 7 | Gymnasium environment | Actions, observations, rewards, crash penalty, reference policies |
+| 8 | RL maneuvers| PPO, live training, curriculum, reward hacking, imitation, transfer, direct surface control |
 
 Notebooks 1–6 (physics, aircraft models, instruments, visualization, classical control) are in
 [jetfighter-sim](https://github.com/elouansalaun/jetfighter-sim/tree/main/notebooks).

@@ -7,12 +7,6 @@ Steps:
 4. optional (``--ppo-steps N``): PPO training in hierarchical mode, TensorBoard tracking
    in ``runs/``, model saved in ``models/``, agent flight exported for Tacview.
 
-Installation: ``uv pip install -e ".[dev,rl]"``.
-
-Usage:
-    python scripts/phase7_env_check.py
-    python scripts/phase7_env_check.py --ppo-steps 100000 --task level --n-envs 8
-    tensorboard --logdir runs          # learning curves
 """
 
 from __future__ import annotations

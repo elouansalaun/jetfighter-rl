@@ -11,13 +11,6 @@ Output tree ::
             final_model.zip
             evaluations.csv       # evaluation history
         seed1/ …
-
-Usage ::
-
-    cfg = TrainConfig.from_yaml("configs/training/8_1_level.yaml")
-    summary = train_seeds(cfg)
-
-or from the command line: ``python scripts/train.py configs/training/8_1_level.yaml``.
 """
 
 from __future__ import annotations
